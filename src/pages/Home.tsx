@@ -10,6 +10,7 @@ import { categories } from '@/data/categories';
 import { getFeaturedProducts, getOfferProducts } from '@/data/products';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import logoImg from '@/assets/logo.png';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-gradient-hero text-primary-foreground safe-area-top">
+      <header className="sticky top-0 z-40 bg-primary text-primary-foreground safe-area-top">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between mb-3">
             <button 
@@ -47,31 +48,40 @@ const Home: React.FC = () => {
 
       <main className="px-4 py-4 space-y-6">
         {/* Hero Banner */}
-        <div className="bg-gradient-card rounded-3xl p-5 border border-border/50 shadow-soft animate-fade-in">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-5 h-5 text-trust" />
-            <Badge variant="trust" className="text-xs">Special Offer</Badge>
+        <div className="bg-gradient-card rounded-2xl p-5 border border-border shadow-card animate-fade-in">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="w-4 h-4 text-accent" />
+                <Badge variant="offer" className="text-xs">Special Offer</Badge>
+              </div>
+              <h2 className="font-heading text-xl font-bold text-foreground mb-1">
+                Fresh from the Farm
+              </h2>
+              <p className="text-sm text-muted-foreground mb-3">
+                Get 20% off on your first order
+              </p>
+              <Button variant="accent" size="sm">
+                Shop Now
+              </Button>
+            </div>
+            <img 
+              src={logoImg} 
+              alt="Our Pure Naturals" 
+              className="w-24 h-auto opacity-80"
+            />
           </div>
-          <h2 className="font-serif text-xl font-bold text-foreground mb-1">
-            Fresh from the Farm
-          </h2>
-          <p className="text-sm text-muted-foreground mb-3">
-            Get 20% off on your first order with code FRESH20
-          </p>
-          <Button variant="accent" size="sm">
-            Shop Now
-          </Button>
         </div>
 
         {/* Quick Categories */}
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-serif text-lg font-bold text-foreground">
+            <h2 className="font-heading text-lg font-bold text-foreground">
               Shop by Category
             </h2>
             <button 
               onClick={() => navigate('/categories')}
-              className="text-sm text-primary font-medium"
+              className="text-sm text-primary font-semibold"
             >
               See All
             </button>
@@ -93,14 +103,14 @@ const Home: React.FC = () => {
         <section>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="font-serif text-lg font-bold text-foreground">
+              <h2 className="font-heading text-lg font-bold text-foreground">
                 Farm Fresh Picks
               </h2>
               <p className="text-xs text-muted-foreground">
                 Handpicked just for you
               </p>
             </div>
-            <button className="text-sm text-primary font-medium">
+            <button className="text-sm text-primary font-semibold">
               View All
             </button>
           </div>
@@ -122,7 +132,7 @@ const Home: React.FC = () => {
           <section>
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h2 className="font-serif text-lg font-bold text-foreground">
+                <h2 className="font-heading text-lg font-bold text-foreground">
                   Today's Deals
                 </h2>
                 <p className="text-xs text-muted-foreground">
@@ -140,10 +150,10 @@ const Home: React.FC = () => {
         )}
 
         {/* Trust Banner */}
-        <section className="bg-primary/5 rounded-2xl p-4 border border-primary/10">
+        <section className="bg-primary/5 rounded-xl p-4 border border-primary/10">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-              <span className="text-2xl">🌾</span>
+              <span className="text-2xl">🌿</span>
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-foreground text-sm">
@@ -158,7 +168,7 @@ const Home: React.FC = () => {
 
         {/* Popular Categories Grid */}
         <section>
-          <h2 className="font-serif text-lg font-bold text-foreground mb-3">
+          <h2 className="font-heading text-lg font-bold text-foreground mb-3">
             Popular Categories
           </h2>
           <div className="grid grid-cols-2 gap-3">

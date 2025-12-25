@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useApp } from '@/contexts/AppContext';
 import { Language } from '@/types';
 import { cn } from '@/lib/utils';
+import logoImg from '@/assets/logo.png';
 
 const Onboarding: React.FC = () => {
   const navigate = useNavigate();
@@ -24,16 +25,22 @@ const Onboarding: React.FC = () => {
       icon: Leaf,
       title: 'Farm Fresh',
       description: 'Directly from farms to your doorstep',
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
     },
     {
       icon: Heart,
       title: 'Pure & Natural',
       description: 'No chemicals, only pure goodness',
+      color: 'text-accent',
+      bgColor: 'bg-accent/10',
     },
     {
       icon: Truck,
       title: 'Fast Delivery',
       description: 'Same day delivery to your home',
+      color: 'text-primary',
+      bgColor: 'bg-primary/10',
     },
   ];
 
@@ -59,28 +66,24 @@ const Onboarding: React.FC = () => {
         {step === 0 && (
           <div className="w-full max-w-sm animate-fade-in">
             {/* Logo */}
-            <div className="text-center mb-12">
-              <div className="w-24 h-24 mx-auto mb-6 rounded-3xl bg-gradient-hero flex items-center justify-center shadow-glow">
-                <span className="text-5xl">🌿</span>
-              </div>
-              <h1 className="font-serif text-3xl font-bold text-foreground mb-2">
-                OurPureNaturals
-              </h1>
-              <p className="text-muted-foreground">
-                From our farm to your family
-              </p>
+            <div className="text-center mb-10">
+              <img 
+                src={logoImg} 
+                alt="Our Pure Naturals" 
+                className="w-56 h-auto mx-auto mb-4"
+              />
             </div>
 
             {/* Features */}
-            <div className="space-y-4 mb-12">
+            <div className="space-y-3 mb-10">
               {features.map((feature, index) => (
                 <div
                   key={feature.title}
-                  className="flex items-center gap-4 p-4 bg-card rounded-2xl shadow-card animate-slide-up"
+                  className="flex items-center gap-4 p-4 bg-card rounded-xl shadow-card border border-border/50 animate-slide-up"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <feature.icon className="w-6 h-6 text-primary" />
+                  <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", feature.bgColor)}>
+                    <feature.icon className={cn("w-6 h-6", feature.color)} />
                   </div>
                   <div>
                     <h3 className="font-semibold text-foreground">{feature.title}</h3>
@@ -95,7 +98,12 @@ const Onboarding: React.FC = () => {
         {step === 1 && (
           <div className="w-full max-w-sm animate-fade-in">
             <div className="text-center mb-8">
-              <h2 className="font-serif text-2xl font-bold text-foreground mb-2">
+              <img 
+                src={logoImg} 
+                alt="Our Pure Naturals" 
+                className="w-32 h-auto mx-auto mb-4"
+              />
+              <h2 className="font-heading text-2xl font-bold text-foreground mb-2">
                 Choose Your Language
               </h2>
               <p className="text-muted-foreground">
@@ -109,7 +117,7 @@ const Onboarding: React.FC = () => {
                   key={lang.code}
                   onClick={() => setSelectedLang(lang.code)}
                   className={cn(
-                    "w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all duration-200 active:scale-[0.98]",
+                    "w-full p-4 rounded-xl border-2 flex items-center justify-between transition-all duration-200 active:scale-[0.98]",
                     selectedLang === lang.code
                       ? "border-primary bg-primary/5 shadow-soft"
                       : "border-border bg-card hover:border-primary/30"
@@ -117,7 +125,7 @@ const Onboarding: React.FC = () => {
                 >
                   <div className="flex items-center gap-3">
                     <div className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold",
+                      "w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold",
                       selectedLang === lang.code
                         ? "bg-primary text-primary-foreground"
                         : "bg-secondary text-foreground"
@@ -148,10 +156,10 @@ const Onboarding: React.FC = () => {
         {step === 2 && (
           <div className="w-full max-w-sm animate-fade-in">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <MapPin className="w-8 h-8 text-primary" />
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-accent/10 flex items-center justify-center">
+                <MapPin className="w-8 h-8 text-accent" />
               </div>
-              <h2 className="font-serif text-2xl font-bold text-foreground mb-2">
+              <h2 className="font-heading text-2xl font-bold text-foreground mb-2">
                 Delivery Location
               </h2>
               <p className="text-muted-foreground">
@@ -167,11 +175,11 @@ const Onboarding: React.FC = () => {
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="Enter pincode or area name"
-                  className="w-full pl-12 pr-4 py-4 bg-card border-2 border-border rounded-2xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                  className="w-full pl-12 pr-4 py-4 bg-card border-2 border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors"
                 />
               </div>
 
-              <button className="w-full p-4 rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 flex items-center justify-center gap-2 text-primary font-medium active:scale-[0.98] transition-transform">
+              <button className="w-full p-4 rounded-xl border-2 border-dashed border-accent/40 bg-accent/5 flex items-center justify-center gap-2 text-accent font-medium active:scale-[0.98] transition-transform">
                 <MapPin className="w-5 h-5" />
                 Use Current Location
               </button>

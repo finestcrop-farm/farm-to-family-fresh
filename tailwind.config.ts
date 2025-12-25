@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Nunito', 'system-ui', 'sans-serif'],
-        serif: ['Playfair Display', 'Georgia', 'serif'],
+        sans: ['Poppins', 'system-ui', 'sans-serif'],
+        heading: ['Montserrat', 'Poppins', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -60,6 +60,12 @@ export default {
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
+        },
+        // Logo colors
+        logo: {
+          green: "hsl(var(--logo-green))",
+          orange: "hsl(var(--logo-orange))",
+          dark: "hsl(var(--logo-dark))",
         },
         // Custom app colors
         fresh: "hsl(var(--fresh-badge))",

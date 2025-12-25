@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,107 +6,110 @@
 
 @layer base {
   :root {
-    /* Nature-inspired warm palette */
-    --background: 45 30% 97%;
-    --foreground: 100 25% 15%;
+    /* Clean white background */
+    --background: 0 0% 100%;
+    --foreground: 120 40% 15%;
 
-    --card: 45 40% 99%;
-    --card-foreground: 100 25% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 120 40% 15%;
 
-    --popover: 45 40% 99%;
-    --popover-foreground: 100 25% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 120 40% 15%;
 
-    /* Sage green - trust, freshness, nature */
-    --primary: 100 35% 42%;
-    --primary-foreground: 45 40% 99%;
+    /* Fresh bright green - from logo leaves */
+    --primary: 120 55% 45%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Warm cream - comfort, purity */
-    --secondary: 40 35% 94%;
-    --secondary-foreground: 100 25% 20%;
+    /* Light green tint for secondary */
+    --secondary: 120 30% 95%;
+    --secondary-foreground: 120 40% 20%;
 
-    /* Soft sage for muted elements */
-    --muted: 100 15% 92%;
-    --muted-foreground: 100 15% 45%;
+    /* Soft green for muted */
+    --muted: 120 15% 94%;
+    --muted-foreground: 120 10% 45%;
 
-    /* Terracotta accent - warmth, earth, CTAs */
-    --accent: 25 75% 52%;
-    --accent-foreground: 45 40% 99%;
+    /* Vibrant orange accent - from logo swoosh */
+    --accent: 28 95% 55%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
-    --destructive-foreground: 45 40% 99%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 100 15% 88%;
-    --input: 100 15% 88%;
-    --ring: 100 35% 42%;
+    --border: 120 15% 90%;
+    --input: 120 15% 90%;
+    --ring: 120 55% 45%;
 
-    --radius: 1rem;
+    --radius: 0.75rem;
 
-    /* Custom tokens */
-    --fresh-badge: 145 60% 45%;
-    --organic-badge: 85 50% 45%;
-    --offer-badge: 25 85% 55%;
-    --trust-gold: 45 80% 50%;
+    /* Custom tokens matching logo colors */
+    --fresh-badge: 120 60% 42%;
+    --organic-badge: 95 55% 45%;
+    --offer-badge: 28 95% 55%;
+    --trust-gold: 45 90% 55%;
+    --logo-green: 120 55% 45%;
+    --logo-orange: 28 95% 55%;
+    --logo-dark: 120 40% 15%;
 
     /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(100 35% 42%) 0%, hsl(100 40% 55%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(45 40% 99%) 0%, hsl(45 30% 96%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(25 75% 52%) 0%, hsl(30 80% 58%) 100%);
-    --gradient-fresh: linear-gradient(135deg, hsl(145 60% 45%) 0%, hsl(100 50% 50%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(120 55% 45%) 0%, hsl(120 60% 50%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(120 20% 98%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(28 95% 55%) 0%, hsl(35 95% 60%) 100%);
+    --gradient-fresh: linear-gradient(135deg, hsl(120 60% 42%) 0%, hsl(100 55% 48%) 100%);
 
     /* Shadows */
-    --shadow-soft: 0 4px 20px -4px hsl(100 25% 15% / 0.08);
-    --shadow-card: 0 2px 12px -2px hsl(100 25% 15% / 0.06);
-    --shadow-elevated: 0 8px 30px -8px hsl(100 25% 15% / 0.12);
-    --shadow-glow: 0 0 20px hsl(100 35% 42% / 0.3);
+    --shadow-soft: 0 4px 20px -4px hsl(120 40% 15% / 0.08);
+    --shadow-card: 0 2px 12px -2px hsl(120 40% 15% / 0.06);
+    --shadow-elevated: 0 8px 30px -8px hsl(120 40% 15% / 0.12);
+    --shadow-glow: 0 0 24px hsl(120 55% 45% / 0.25);
 
-    /* Sidebar defaults */
-    --sidebar-background: 45 30% 97%;
-    --sidebar-foreground: 100 25% 15%;
-    --sidebar-primary: 100 35% 42%;
-    --sidebar-primary-foreground: 45 40% 99%;
-    --sidebar-accent: 40 35% 94%;
-    --sidebar-accent-foreground: 100 25% 20%;
-    --sidebar-border: 100 15% 88%;
-    --sidebar-ring: 100 35% 42%;
+    /* Sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 120 40% 15%;
+    --sidebar-primary: 120 55% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 120 30% 95%;
+    --sidebar-accent-foreground: 120 40% 20%;
+    --sidebar-border: 120 15% 90%;
+    --sidebar-ring: 120 55% 45%;
   }
 
   .dark {
-    --background: 100 20% 8%;
-    --foreground: 45 30% 95%;
+    --background: 120 25% 8%;
+    --foreground: 120 10% 95%;
 
-    --card: 100 18% 12%;
-    --card-foreground: 45 30% 95%;
+    --card: 120 20% 12%;
+    --card-foreground: 120 10% 95%;
 
-    --popover: 100 18% 12%;
-    --popover-foreground: 45 30% 95%;
+    --popover: 120 20% 12%;
+    --popover-foreground: 120 10% 95%;
 
-    --primary: 100 40% 55%;
-    --primary-foreground: 100 20% 8%;
+    --primary: 120 55% 50%;
+    --primary-foreground: 120 25% 8%;
 
-    --secondary: 100 15% 18%;
-    --secondary-foreground: 45 30% 90%;
+    --secondary: 120 15% 18%;
+    --secondary-foreground: 120 10% 90%;
 
-    --muted: 100 15% 18%;
-    --muted-foreground: 100 10% 60%;
+    --muted: 120 15% 18%;
+    --muted-foreground: 120 10% 60%;
 
-    --accent: 25 70% 55%;
-    --accent-foreground: 100 20% 8%;
+    --accent: 28 90% 55%;
+    --accent-foreground: 120 25% 8%;
 
     --destructive: 0 62% 50%;
-    --destructive-foreground: 45 40% 99%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 100 15% 20%;
-    --input: 100 15% 20%;
-    --ring: 100 40% 55%;
+    --border: 120 15% 20%;
+    --input: 120 15% 20%;
+    --ring: 120 55% 50%;
 
-    --sidebar-background: 100 20% 8%;
-    --sidebar-foreground: 45 30% 95%;
-    --sidebar-primary: 100 40% 55%;
-    --sidebar-primary-foreground: 100 20% 8%;
-    --sidebar-accent: 100 15% 18%;
-    --sidebar-accent-foreground: 45 30% 90%;
-    --sidebar-border: 100 15% 20%;
-    --sidebar-ring: 100 40% 55%;
+    --sidebar-background: 120 25% 8%;
+    --sidebar-foreground: 120 10% 95%;
+    --sidebar-primary: 120 55% 50%;
+    --sidebar-primary-foreground: 120 25% 8%;
+    --sidebar-accent: 120 15% 18%;
+    --sidebar-accent-foreground: 120 10% 90%;
+    --sidebar-border: 120 15% 20%;
+    --sidebar-ring: 120 55% 50%;
   }
 }
 
@@ -117,11 +120,12 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Nunito', system-ui, sans-serif;
+    font-family: 'Poppins', system-ui, sans-serif;
   }
 
   h1, h2, h3 {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Montserrat', 'Poppins', sans-serif;
+    font-weight: 700;
   }
 }
 
@@ -163,7 +167,27 @@
     box-shadow: var(--shadow-glow);
   }
 
-  /* Mobile-specific utilities */
+  .text-logo-green {
+    color: hsl(var(--logo-green));
+  }
+
+  .text-logo-orange {
+    color: hsl(var(--logo-orange));
+  }
+
+  .text-logo-dark {
+    color: hsl(var(--logo-dark));
+  }
+
+  .bg-logo-green {
+    background-color: hsl(var(--logo-green));
+  }
+
+  .bg-logo-orange {
+    background-color: hsl(var(--logo-orange));
+  }
+
+  /* Mobile utilities */
   .safe-area-top {
     padding-top: env(safe-area-inset-top, 0px);
   }
@@ -172,13 +196,11 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  /* Smooth scrolling */
   .scroll-smooth {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Hide scrollbar */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -187,7 +209,6 @@
     display: none;
   }
 
-  /* Animation utilities */
   .animate-fade-in {
     animation: fadeIn 0.5s ease-out forwards;
   }
