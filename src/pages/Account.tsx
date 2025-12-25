@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BottomNav from '@/components/BottomNav';
+import logoImg from '@/assets/logo.png';
 
 const Account: React.FC = () => {
   const navigate = useNavigate();
@@ -41,14 +42,14 @@ const Account: React.FC = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
-      <header className="bg-gradient-hero text-primary-foreground safe-area-top">
+      <header className="bg-primary text-primary-foreground safe-area-top">
         <div className="px-4 py-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-primary-foreground/20 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-xl bg-primary-foreground/20 flex items-center justify-center overflow-hidden">
               <User className="w-8 h-8" />
             </div>
             <div className="flex-1">
-              <h1 className="font-serif text-xl font-bold">Welcome!</h1>
+              <h1 className="font-heading text-xl font-bold">Welcome!</h1>
               <p className="text-sm text-primary-foreground/80">Login to access your account</p>
             </div>
           </div>
@@ -69,7 +70,7 @@ const Account: React.FC = () => {
             { label: 'Rewards', value: '0' },
             { label: 'Wallet', value: '₹0' },
           ].map((stat) => (
-            <div key={stat.label} className="p-4 bg-card rounded-xl text-center shadow-card">
+            <div key={stat.label} className="p-4 bg-card rounded-xl text-center shadow-card border border-border">
               <p className="font-bold text-xl text-primary">{stat.value}</p>
               <p className="text-xs text-muted-foreground">{stat.label}</p>
             </div>
@@ -82,14 +83,14 @@ const Account: React.FC = () => {
             <h2 className="font-semibold text-muted-foreground text-xs uppercase tracking-wider mb-2 px-1">
               {section.section}
             </h2>
-            <div className="bg-card rounded-2xl overflow-hidden shadow-card divide-y divide-border">
+            <div className="bg-card rounded-xl overflow-hidden shadow-card border border-border divide-y divide-border">
               {section.items.map((item) => (
                 <button
                   key={item.label}
                   onClick={() => navigate(item.path)}
                   className="flex items-center gap-4 w-full p-4 hover:bg-muted/50 active:bg-muted transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <item.icon className="w-5 h-5 text-primary" />
                   </div>
                   <div className="flex-1 text-left">
@@ -105,26 +106,33 @@ const Account: React.FC = () => {
 
         {/* Settings & Logout */}
         <div className="space-y-2">
-          <button className="flex items-center gap-4 w-full p-4 bg-card rounded-2xl shadow-card hover:bg-muted/50 active:bg-muted transition-colors">
-            <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
+          <button className="flex items-center gap-4 w-full p-4 bg-card rounded-xl shadow-card border border-border hover:bg-muted/50 active:bg-muted transition-colors">
+            <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center">
               <Settings className="w-5 h-5 text-muted-foreground" />
             </div>
             <span className="flex-1 text-left font-medium text-foreground">Settings</span>
             <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </button>
 
-          <button className="flex items-center gap-4 w-full p-4 bg-card rounded-2xl shadow-card hover:bg-destructive/5 active:bg-destructive/10 transition-colors">
-            <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
+          <button className="flex items-center gap-4 w-full p-4 bg-card rounded-xl shadow-card border border-border hover:bg-destructive/5 active:bg-destructive/10 transition-colors">
+            <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center">
               <LogOut className="w-5 h-5 text-destructive" />
             </div>
             <span className="flex-1 text-left font-medium text-destructive">Logout</span>
           </button>
         </div>
 
-        {/* App Version */}
-        <p className="text-center text-xs text-muted-foreground">
-          OurPureNaturals v1.0.0
-        </p>
+        {/* App Info */}
+        <div className="text-center pt-4">
+          <img 
+            src={logoImg} 
+            alt="Our Pure Naturals" 
+            className="w-28 h-auto mx-auto mb-2 opacity-60"
+          />
+          <p className="text-xs text-muted-foreground">
+            Version 1.0.0
+          </p>
+        </div>
       </main>
 
       <BottomNav />
