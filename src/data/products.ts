@@ -128,6 +128,40 @@ export const products: Product[] = [
     rating: 4.8,
     reviewCount: 267,
   },
+  // Additional vegetables
+  {
+    id: 'carrot-1',
+    name: 'Organic Carrots',
+    nameHindi: 'गाजर',
+    nameTelugu: 'క్యారెట్లు',
+    price: 55,
+    unit: '500g',
+    image: potatoesImg,
+    category: 'fruits-vegetables',
+    subcategory: 'daily-veggies',
+    description: 'Fresh organic carrots, rich in vitamins and perfect for salads.',
+    freshnessBadge: 'organic',
+    inStock: true,
+    rating: 4.5,
+    reviewCount: 145,
+  },
+  {
+    id: 'capsicum-1',
+    name: 'Green Capsicum',
+    nameHindi: 'शिमला मिर्च',
+    nameTelugu: 'క్యాప్సికం',
+    price: 60,
+    originalPrice: 75,
+    unit: '250g',
+    image: spinachImg,
+    category: 'fruits-vegetables',
+    subcategory: 'daily-veggies',
+    description: 'Crunchy green capsicums, perfect for stir-fries and salads.',
+    freshnessBadge: 'farm-fresh',
+    inStock: true,
+    rating: 4.3,
+    reviewCount: 87,
+  },
   // Meat & Fish
   {
     id: 'chicken-1',
@@ -148,6 +182,22 @@ export const products: Product[] = [
     reviewCount: 423,
   },
   {
+    id: 'chicken-2',
+    name: 'Boneless Chicken Breast',
+    nameHindi: 'बोनलेस चिकन ब्रेस्ट',
+    nameTelugu: 'బోన్‌లెస్ చికెన్',
+    price: 320,
+    unit: '500g',
+    image: chickenImg,
+    category: 'meat-fish',
+    subcategory: 'chicken',
+    description: 'Premium boneless chicken breast, lean and protein-rich.',
+    freshnessBadge: 'farm-fresh',
+    inStock: true,
+    rating: 4.7,
+    reviewCount: 234,
+  },
+  {
     id: 'fish-1',
     name: 'Fresh Rohu Fish',
     nameHindi: 'ताज़ी रोहू मछली',
@@ -163,6 +213,22 @@ export const products: Product[] = [
     inStock: true,
     rating: 4.6,
     reviewCount: 178,
+  },
+  {
+    id: 'mutton-1',
+    name: 'Fresh Mutton - Curry Cut',
+    nameHindi: 'ताज़ा मटन',
+    nameTelugu: 'తాజా మటన్',
+    price: 650,
+    unit: '500g',
+    image: chickenImg,
+    category: 'meat-fish',
+    subcategory: 'mutton',
+    description: 'Premium quality fresh mutton, perfect for biryani and curries.',
+    freshnessBadge: 'farm-fresh',
+    inStock: true,
+    rating: 4.8,
+    reviewCount: 312,
   },
   // Pickles
   {
@@ -199,6 +265,23 @@ export const products: Product[] = [
     rating: 4.8,
     reviewCount: 345,
   },
+  {
+    id: 'lemon-pickle-1',
+    name: 'Lemon Pickle',
+    nameHindi: 'नींबू का अचार',
+    nameTelugu: 'నిమ్మకాయ ఊరగాయ',
+    price: 180,
+    originalPrice: 210,
+    unit: '300g',
+    image: avakayaImg,
+    category: 'pickles-homemade',
+    subcategory: 'andhra-pickles',
+    description: 'Tangy and spicy lemon pickle, homemade with traditional spices.',
+    freshnessBadge: 'handpicked',
+    inStock: true,
+    rating: 4.6,
+    reviewCount: 234,
+  },
   // Dairy
   {
     id: 'milk-1',
@@ -234,6 +317,38 @@ export const products: Product[] = [
     rating: 4.6,
     reviewCount: 234,
   },
+  {
+    id: 'curd-1',
+    name: 'Fresh Curd',
+    nameHindi: 'ताज़ा दही',
+    nameTelugu: 'తాజా పెరుగు',
+    price: 45,
+    unit: '500g',
+    image: milkImg,
+    category: 'dairy-bakery',
+    subcategory: 'curd-yogurt',
+    description: 'Thick and creamy curd made from fresh milk.',
+    freshnessBadge: 'farm-fresh',
+    inStock: true,
+    rating: 4.5,
+    reviewCount: 456,
+  },
+  {
+    id: 'ghee-1',
+    name: 'Pure Cow Ghee',
+    nameHindi: 'शुद्ध गाय का घी',
+    nameTelugu: 'స్వచ్ఛమైన ఆవు నెయ్యి',
+    price: 550,
+    unit: '500ml',
+    image: milkImg,
+    category: 'dairy-bakery',
+    subcategory: 'butter-ghee',
+    description: 'Traditional bilona ghee made from pure cow milk.',
+    freshnessBadge: 'organic',
+    inStock: true,
+    rating: 4.9,
+    reviewCount: 678,
+  },
   // Grocery
   {
     id: 'rice-1',
@@ -252,6 +367,22 @@ export const products: Product[] = [
     reviewCount: 456,
   },
   {
+    id: 'basmati-1',
+    name: 'Basmati Rice Premium',
+    nameHindi: 'बासमती चावल',
+    nameTelugu: 'బాస్మతి బియ్యం',
+    price: 180,
+    originalPrice: 220,
+    unit: '1kg',
+    image: riceImg,
+    category: 'grocery-staples',
+    subcategory: 'rice',
+    description: 'Long grain premium basmati rice, perfect for biryani.',
+    inStock: true,
+    rating: 4.7,
+    reviewCount: 345,
+  },
+  {
     id: 'toor-dal-1',
     name: 'Toor Dal',
     nameHindi: 'तूर दाल',
@@ -266,6 +397,21 @@ export const products: Product[] = [
     inStock: true,
     rating: 4.4,
     reviewCount: 234,
+  },
+  {
+    id: 'moong-dal-1',
+    name: 'Moong Dal',
+    nameHindi: 'मूंग दाल',
+    nameTelugu: 'పెసర పప్పు',
+    price: 160,
+    unit: '1kg',
+    image: toorDalImg,
+    category: 'grocery-staples',
+    subcategory: 'dal-pulses',
+    description: 'Yellow split moong dal, easy to digest and nutritious.',
+    inStock: true,
+    rating: 4.5,
+    reviewCount: 189,
   },
   // Organic
   {
@@ -285,6 +431,55 @@ export const products: Product[] = [
     inStock: true,
     rating: 4.9,
     reviewCount: 678,
+  },
+  {
+    id: 'coconut-oil-1',
+    name: 'Virgin Coconut Oil',
+    nameHindi: 'नारियल तेल',
+    nameTelugu: 'కొబ్బరి నూనె',
+    price: 280,
+    unit: '500ml',
+    image: groundnutOilImg,
+    category: 'organic-health',
+    subcategory: 'cold-pressed',
+    description: 'Pure virgin coconut oil, cold-pressed for maximum nutrition.',
+    freshnessBadge: 'organic',
+    inStock: true,
+    rating: 4.8,
+    reviewCount: 456,
+  },
+  {
+    id: 'honey-1',
+    name: 'Wild Forest Honey',
+    nameHindi: 'जंगली शहद',
+    nameTelugu: 'అడవి తేనె',
+    price: 450,
+    originalPrice: 550,
+    unit: '500g',
+    image: groundnutOilImg,
+    category: 'organic-health',
+    subcategory: 'honey-jaggery',
+    description: 'Pure wild honey collected from forest bee colonies. Unprocessed and raw.',
+    freshnessBadge: 'organic',
+    inStock: true,
+    rating: 4.9,
+    reviewCount: 567,
+  },
+  {
+    id: 'jaggery-1',
+    name: 'Organic Jaggery',
+    nameHindi: 'जैविक गुड़',
+    nameTelugu: 'ఆర్గానిక్ బెల్లం',
+    price: 120,
+    unit: '500g',
+    image: groundnutOilImg,
+    category: 'organic-health',
+    subcategory: 'honey-jaggery',
+    description: 'Chemical-free organic jaggery, perfect for sweets and daily use.',
+    freshnessBadge: 'organic',
+    inStock: true,
+    rating: 4.6,
+    reviewCount: 234,
   },
 ];
 
@@ -306,14 +501,23 @@ export const searchProducts = (query: string): Product[] => {
     p.name.toLowerCase().includes(lowerQuery) ||
     p.nameHindi?.toLowerCase().includes(lowerQuery) ||
     p.nameTelugu?.toLowerCase().includes(lowerQuery) ||
-    p.description?.toLowerCase().includes(lowerQuery)
+    p.description?.toLowerCase().includes(lowerQuery) ||
+    p.category.toLowerCase().includes(lowerQuery)
   );
 };
 
 export const getFeaturedProducts = (): Product[] => {
-  return products.filter(p => p.rating && p.rating >= 4.7).slice(0, 8);
+  return products.filter(p => p.rating && p.rating >= 4.6).slice(0, 10);
 };
 
 export const getOfferProducts = (): Product[] => {
   return products.filter(p => p.originalPrice && p.originalPrice > p.price);
+};
+
+export const getNewArrivals = (): Product[] => {
+  return products.slice(-6);
+};
+
+export const getBestSellers = (): Product[] => {
+  return products.filter(p => p.reviewCount && p.reviewCount > 200).slice(0, 6);
 };
