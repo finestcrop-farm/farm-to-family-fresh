@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, ChevronDown, Bell, Sparkles, TrendingUp, Clock, Percent } from 'lucide-react';
+import { MapPin, ChevronDown, Bell, Sparkles, TrendingUp, Clock, Percent, ChevronRight, Gift, Zap } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import SearchBar from '@/components/SearchBar';
 import CategoryCard from '@/components/CategoryCard';
@@ -20,26 +20,34 @@ const Home: React.FC = () => {
   const bestSellers = getBestSellers();
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-gradient-hero text-primary-foreground safe-area-top">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between mb-3">
             <button 
               onClick={() => navigate('/location')}
-              className="flex items-center gap-1 active:opacity-70 transition-opacity"
+              className="flex items-center gap-2 active:opacity-70 transition-opacity group"
             >
-              <MapPin className="w-4 h-4" />
-              <span className="text-sm font-medium max-w-[180px] truncate">
-                {selectedLocation}
-              </span>
-              <ChevronDown className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-full bg-primary-foreground/10 flex items-center justify-center">
+                <MapPin className="w-4 h-4" />
+              </div>
+              <div className="text-left">
+                <p className="text-xs opacity-80">Deliver to</p>
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-semibold max-w-[140px] truncate">
+                    {selectedLocation}
+                  </span>
+                  <ChevronDown className="w-4 h-4 transition-transform group-hover:translate-y-0.5" />
+                </div>
+              </div>
             </button>
             <div className="flex items-center gap-2">
-              <button className="relative p-2 rounded-full bg-primary-foreground/10 active:bg-primary-foreground/20 transition-colors">
+              <button className="relative p-2.5 rounded-full bg-primary-foreground/10 active:bg-primary-foreground/20 transition-colors">
                 <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full animate-pulse" />
+                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-accent rounded-full animate-pulse border-2 border-primary" />
               </button>
+              <img src={logoImg} alt="Logo" className="h-9 w-auto" />
             </div>
           </div>
           <SearchBar 
@@ -51,46 +59,51 @@ const Home: React.FC = () => {
 
       <main className="px-4 py-4 space-y-6">
         {/* Hero Banner */}
-        <div className="bg-gradient-card rounded-2xl p-5 border border-border shadow-elevated animate-fade-in overflow-hidden relative">
-          <div className="absolute -right-8 -top-8 w-32 h-32 bg-primary/5 rounded-full" />
-          <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-accent/5 rounded-full" />
+        <div className="bg-gradient-to-br from-primary/5 via-card to-accent/5 rounded-3xl p-5 border border-border shadow-elevated animate-fade-in overflow-hidden relative">
+          <div className="absolute -right-12 -top-12 w-40 h-40 bg-primary/10 rounded-full blur-2xl" />
+          <div className="absolute -left-8 -bottom-8 w-32 h-32 bg-accent/10 rounded-full blur-2xl" />
           <div className="flex items-center justify-between relative z-10">
-            <div className="flex-1">
+            <div className="flex-1 pr-4">
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="w-4 h-4 text-accent animate-pulse" />
-                <Badge variant="offer" className="text-xs">Special Offer</Badge>
+                <Badge variant="offer" className="text-xs font-semibold">First Order</Badge>
               </div>
-              <h2 className="font-heading text-xl font-bold text-foreground mb-1">
-                Fresh from the Farm
+              <h2 className="font-heading text-2xl font-bold text-foreground mb-1">
+                Get 20% OFF
               </h2>
-              <p className="text-sm text-muted-foreground mb-3">
-                Get 20% off on your first order
+              <p className="text-sm text-muted-foreground mb-4">
+                Fresh groceries delivered to your door
               </p>
-              <Button variant="accent" size="sm" className="shadow-soft">
+              <Button variant="accent" size="sm" className="shadow-soft group">
                 Shop Now
+                <ChevronRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
               </Button>
             </div>
-            <img 
-              src={logoImg} 
-              alt="Our Pure Naturals" 
-              className="w-24 h-auto opacity-90"
-            />
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl" />
+              <img 
+                src={logoImg} 
+                alt="Our Pure Naturals" 
+                className="w-28 h-auto relative z-10"
+              />
+            </div>
           </div>
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-3">
           {[
-            { icon: Clock, label: '2-4 hrs', desc: 'Delivery', color: 'text-primary bg-primary/10' },
-            { icon: Percent, label: 'Upto 40%', desc: 'Savings', color: 'text-accent bg-accent/10' },
-            { icon: TrendingUp, label: '1000+', desc: 'Products', color: 'text-fresh bg-fresh/10' },
-          ].map((stat) => (
+            { icon: Clock, label: '2-4 hrs', desc: 'Delivery', color: 'bg-primary/10 text-primary', iconBg: 'bg-primary' },
+            { icon: Percent, label: 'Upto 40%', desc: 'Savings', color: 'bg-accent/10 text-accent', iconBg: 'bg-accent' },
+            { icon: Gift, label: 'Free', desc: 'Above ₹499', color: 'bg-fresh/10 text-fresh', iconBg: 'bg-fresh' },
+          ].map((stat, index) => (
             <div 
               key={stat.label} 
-              className="flex flex-col items-center p-3 bg-card rounded-xl shadow-card border border-border/50 animate-fade-in"
+              className="flex flex-col items-center p-3 bg-card rounded-2xl shadow-card border border-border/50 animate-fade-in hover:shadow-soft transition-shadow"
+              style={{ animationDelay: `${index * 50}ms` }}
             >
-              <div className={`w-8 h-8 rounded-lg ${stat.color} flex items-center justify-center mb-1`}>
-                <stat.icon className="w-4 h-4" />
+              <div className={`w-10 h-10 rounded-xl ${stat.iconBg} flex items-center justify-center mb-2 shadow-sm`}>
+                <stat.icon className="w-5 h-5 text-primary-foreground" />
               </div>
               <p className="font-bold text-sm text-foreground">{stat.label}</p>
               <p className="text-[10px] text-muted-foreground">{stat.desc}</p>
@@ -100,23 +113,24 @@ const Home: React.FC = () => {
 
         {/* Quick Categories */}
         <section>
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-4">
             <h2 className="font-heading text-lg font-bold text-foreground">
               Shop by Category
             </h2>
             <button 
               onClick={() => navigate('/categories')}
-              className="text-sm text-primary font-semibold hover:underline"
+              className="text-sm text-primary font-semibold hover:underline flex items-center gap-1 group"
             >
               See All
+              <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </button>
           </div>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-3">
             {categories.slice(0, 8).map((category, index) => (
               <div 
                 key={category.id} 
                 className="animate-fade-in"
-                style={{ animationDelay: `${index * 50}ms` }}
+                style={{ animationDelay: `${index * 30}ms` }}
               >
                 <CategoryCard category={category} variant="compact" />
               </div>
@@ -126,27 +140,31 @@ const Home: React.FC = () => {
 
         {/* Featured Products */}
         <section>
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="font-heading text-lg font-bold text-foreground">
-                Farm Fresh Picks
-              </h2>
-              <p className="text-xs text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-accent" />
+                <h2 className="font-heading text-lg font-bold text-foreground">
+                  Farm Fresh Picks
+                </h2>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Handpicked just for you
               </p>
             </div>
             <button 
               onClick={() => navigate('/categories')}
-              className="text-sm text-primary font-semibold hover:underline"
+              className="text-sm text-primary font-semibold hover:underline flex items-center gap-1 group"
             >
               View All
+              <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </button>
           </div>
           <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2">
             {featuredProducts.map((product, index) => (
               <div 
                 key={product.id} 
-                className="flex-shrink-0 w-[160px] animate-fade-in"
+                className="flex-shrink-0 w-[155px] animate-fade-in"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <ProductCard product={product} variant="compact" />
@@ -157,9 +175,9 @@ const Home: React.FC = () => {
 
         {/* Best Sellers */}
         <section>
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-accent" />
+              <TrendingUp className="w-5 h-5 text-primary" />
               <h2 className="font-heading text-lg font-bold text-foreground">
                 Best Sellers
               </h2>
@@ -181,7 +199,7 @@ const Home: React.FC = () => {
         {/* Offers Section */}
         {offerProducts.length > 0 && (
           <section>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="font-heading text-lg font-bold text-foreground">
                   Today's Deals
@@ -190,13 +208,13 @@ const Home: React.FC = () => {
                   Save more on your favorites
                 </p>
               </div>
-              <Badge variant="offer" className="animate-pulse">🔥 Hot Deals</Badge>
+              <Badge variant="offer" className="animate-pulse">🔥 Hot</Badge>
             </div>
             <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2">
               {offerProducts.map((product, index) => (
                 <div 
                   key={product.id} 
-                  className="flex-shrink-0 w-[160px] animate-fade-in"
+                  className="flex-shrink-0 w-[155px] animate-fade-in"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   <ProductCard product={product} variant="compact" />
@@ -207,16 +225,17 @@ const Home: React.FC = () => {
         )}
 
         {/* Trust Banner */}
-        <section className="bg-gradient-fresh rounded-xl p-4 text-primary-foreground shadow-elevated">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-primary-foreground/20 flex items-center justify-center">
-              <span className="text-2xl">🌿</span>
+        <section className="bg-gradient-fresh rounded-2xl p-5 text-primary-foreground shadow-elevated overflow-hidden relative">
+          <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-primary-foreground/10 rounded-full" />
+          <div className="flex items-center gap-4 relative z-10">
+            <div className="w-14 h-14 rounded-2xl bg-primary-foreground/20 flex items-center justify-center">
+              <span className="text-3xl">🌿</span>
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-sm">
+              <h3 className="font-semibold text-base">
                 From Our Farm to Your Family
               </h3>
-              <p className="text-xs opacity-90">
+              <p className="text-sm opacity-90">
                 100% fresh, pure & natural products
               </p>
             </div>
@@ -225,7 +244,7 @@ const Home: React.FC = () => {
 
         {/* Popular Categories Grid */}
         <section>
-          <h2 className="font-heading text-lg font-bold text-foreground mb-3">
+          <h2 className="font-heading text-lg font-bold text-foreground mb-4">
             Popular Categories
           </h2>
           <div className="grid grid-cols-2 gap-3">
@@ -242,11 +261,14 @@ const Home: React.FC = () => {
         </section>
 
         {/* App Download Banner */}
-        <section className="bg-card rounded-xl p-4 border border-border shadow-card">
-          <div className="flex items-center gap-3">
-            <img src={logoImg} alt="App" className="w-14 h-14 rounded-xl" />
+        <section className="bg-card rounded-2xl p-4 border border-border shadow-card overflow-hidden relative">
+          <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-primary/5 rounded-full" />
+          <div className="flex items-center gap-4 relative z-10">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-hero flex items-center justify-center shadow-soft">
+              <img src={logoImg} alt="App" className="w-10 h-10" />
+            </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-foreground text-sm">
+              <h3 className="font-semibold text-foreground">
                 Install our App
               </h3>
               <p className="text-xs text-muted-foreground">
