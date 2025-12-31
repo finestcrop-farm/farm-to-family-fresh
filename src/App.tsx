@@ -21,6 +21,8 @@ import OrderConfirmation from "./pages/OrderConfirmation";
 import OrderTracking from "./pages/OrderTracking";
 import Notifications from "./pages/Notifications";
 import NotificationSettings from "./pages/NotificationSettings";
+import Subscriptions from "./pages/Subscriptions";
+import DietaryFilters from "./pages/DietaryFilters";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +51,8 @@ const App = () => (
             <Route path="/order-tracking" element={<OrderTracking />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/notification-settings" element={<NotificationSettings />} />
+            <Route path="/subscriptions" element={<Subscriptions />} />
+            <Route path="/dietary-filters" element={<DietaryFilters />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

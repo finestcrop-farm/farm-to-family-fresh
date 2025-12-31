@@ -91,23 +91,25 @@ const Home: React.FC = () => {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-2">
           {[
-            { icon: Clock, label: '2-4 hrs', desc: 'Delivery', color: 'bg-primary/10 text-primary', iconBg: 'bg-primary' },
-            { icon: Percent, label: 'Upto 40%', desc: 'Savings', color: 'bg-accent/10 text-accent', iconBg: 'bg-accent' },
-            { icon: Gift, label: 'Free', desc: 'Above ₹499', color: 'bg-fresh/10 text-fresh', iconBg: 'bg-fresh' },
+            { icon: Clock, label: '2-4 hrs', desc: 'Delivery', color: 'bg-primary/10 text-primary', iconBg: 'bg-primary', link: null },
+            { icon: Percent, label: 'Upto 40%', desc: 'Savings', color: 'bg-accent/10 text-accent', iconBg: 'bg-accent', link: null },
+            { icon: Gift, label: 'Subscribe', desc: 'Save 15%', color: 'bg-fresh/10 text-fresh', iconBg: 'bg-fresh', link: '/subscriptions' },
+            { icon: Zap, label: 'Diet', desc: 'Filters', color: 'bg-primary/10 text-primary', iconBg: 'bg-primary', link: '/dietary-filters' },
           ].map((stat, index) => (
-            <div 
+            <button 
               key={stat.label} 
-              className="flex flex-col items-center p-3 bg-card rounded-2xl shadow-card border border-border/50 animate-fade-in hover:shadow-soft transition-shadow"
+              onClick={() => stat.link && navigate(stat.link)}
+              className="flex flex-col items-center p-2 bg-card rounded-2xl shadow-card border border-border/50 animate-fade-in hover:shadow-soft transition-shadow"
               style={{ animationDelay: `${index * 50}ms` }}
             >
-              <div className={`w-10 h-10 rounded-xl ${stat.iconBg} flex items-center justify-center mb-2 shadow-sm`}>
-                <stat.icon className="w-5 h-5 text-primary-foreground" />
+              <div className={`w-9 h-9 rounded-xl ${stat.iconBg} flex items-center justify-center mb-1 shadow-sm`}>
+                <stat.icon className="w-4 h-4 text-primary-foreground" />
               </div>
-              <p className="font-bold text-sm text-foreground">{stat.label}</p>
-              <p className="text-[10px] text-muted-foreground">{stat.desc}</p>
-            </div>
+              <p className="font-bold text-xs text-foreground">{stat.label}</p>
+              <p className="text-[9px] text-muted-foreground">{stat.desc}</p>
+            </button>
           ))}
         </div>
 

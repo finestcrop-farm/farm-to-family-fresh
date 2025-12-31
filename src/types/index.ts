@@ -18,7 +18,20 @@ export interface Product {
   inStock: boolean;
   rating?: number;
   reviewCount?: number;
+  // Dietary tags
+  dietaryTags?: DietaryTag[];
+  isSubscribable?: boolean;
 }
+
+export type DietaryTag = 
+  | 'diabetic-friendly'
+  | 'high-protein'
+  | 'gluten-free'
+  | 'low-carb'
+  | 'heart-healthy'
+  | 'weight-loss'
+  | 'vegan'
+  | 'organic';
 
 export interface Category {
   id: string;
@@ -42,6 +55,16 @@ export interface Subcategory {
 export interface CartItem {
   product: Product;
   quantity: number;
+  isSubscription?: boolean;
+  subscriptionPlan?: SubscriptionPlan;
+}
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly';
+  discount: number;
+  deliveryDays?: string[];
 }
 
 export interface DeliverySlot {
@@ -67,4 +90,11 @@ export interface UserPreferences {
   language: Language;
   location?: Address;
   onboardingCompleted: boolean;
+}
+
+export interface DietaryFilter {
+  id: DietaryTag;
+  name: string;
+  icon: string;
+  description: string;
 }

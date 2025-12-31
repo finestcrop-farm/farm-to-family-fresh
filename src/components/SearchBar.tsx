@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Mic } from 'lucide-react';
+import { Search, Mic, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SearchBarProps {
@@ -8,16 +8,24 @@ interface SearchBarProps {
   onSearch?: (query: string) => void;
   autoFocus?: boolean;
   variant?: 'default' | 'hero';
+  value?: string;
+  onChange?: (value: string) => void;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({ 
   placeholder = 'Search for vegetables, fruits, meat...', 
   onSearch,
   autoFocus = false,
-  variant = 'default'
+  variant = 'default',
+  value: controlledValue,
+  onChange: onControlledChange,
 }) => {
   const navigate = useNavigate();
-  const [query, setQuery] = useState('');
+  const [internalQuery, setInternalQuery] = useState('');
+  
+  // Support both controlled and uncontrolled modes
+  const query = controlledValue !== undefined ? controlledValue : internalQuery;
+  const setQuery = onControlledChange || setInternalQuery;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,18 +39,15 @@ const SearchBar: React.FC<SearchBarProps> = ({
   };
 
   const handleClick = () => {
-    if (!onSearch) {
+    if (!onSearch && !autoFocus) {
       navigate('/search');
     }
   };
 
-  const suggestions = [
-    'Farm-fresh tomatoes',
-    'Andhra Avakaya pickle',
-    'Country chicken curry cut',
-    'Organic vegetables',
-    'Cold pressed oil',
-  ];
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setQuery('');
+  };
 
   return (
     <form onSubmit={handleSubmit} className="w-full">
@@ -67,6 +72,15 @@ const SearchBar: React.FC<SearchBarProps> = ({
             variant === 'hero' ? 'text-base' : 'text-sm'
           )}
         />
+        {query && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="p-1 rounded-full hover:bg-muted transition-colors"
+          >
+            <X className="w-4 h-4 text-muted-foreground" />
+          </button>
+        )}
         <button
           type="button"
           className="p-1.5 rounded-full bg-primary/10 text-primary active:scale-95 transition-transform"
