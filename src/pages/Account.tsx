@@ -3,14 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { 
   User, MapPin, Package, Heart, Wallet, 
   Settings, HelpCircle, LogOut, ChevronRight,
-  Bell, Gift, Star, Shield, Phone, Mail
+  Bell, Gift, Star, Shield, Phone, Mail, Crown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BottomNav from '@/components/BottomNav';
 import logoImg from '@/assets/logo.png';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Account: React.FC = () => {
   const navigate = useNavigate();
+  const { user, profile, isAdmin, signOut, isLoading } = useAuth();
 
   const menuItems = [
     {
@@ -39,6 +41,19 @@ const Account: React.FC = () => {
     },
   ];
 
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
@@ -49,21 +64,61 @@ const Account: React.FC = () => {
               <User className="w-8 h-8" />
             </div>
             <div className="flex-1">
-              <h1 className="font-heading text-xl font-bold">Welcome!</h1>
-              <p className="text-sm opacity-80">Login to access your account</p>
+              {user ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <h1 className="font-heading text-xl font-bold">
+                      {profile?.full_name || 'Welcome!'}
+                    </h1>
+                    {isAdmin && (
+                      <span className="px-2 py-0.5 bg-amber-500/20 text-amber-200 text-xs font-semibold rounded-full flex items-center gap-1">
+                        <Crown className="w-3 h-3" />
+                        Admin
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm opacity-80">{profile?.phone || user.phone}</p>
+                </>
+              ) : (
+                <>
+                  <h1 className="font-heading text-xl font-bold">Welcome!</h1>
+                  <p className="text-sm opacity-80">Login to access your account</p>
+                </>
+              )}
             </div>
           </div>
-          <Button 
-            variant="secondary" 
-            className="w-full mt-4 bg-primary-foreground text-primary border-0 hover:bg-primary-foreground/90 font-semibold shadow-soft"
-          >
-            <Phone className="w-4 h-4 mr-2" />
-            Login / Sign Up
-          </Button>
+          
+          {!user && (
+            <Button 
+              onClick={() => navigate('/login')}
+              variant="secondary" 
+              className="w-full mt-4 bg-primary-foreground text-primary border-0 hover:bg-primary-foreground/90 font-semibold shadow-soft"
+            >
+              <Phone className="w-4 h-4 mr-2" />
+              Login / Sign Up
+            </Button>
+          )}
         </div>
       </header>
 
       <main className="px-4 py-4 space-y-6">
+        {/* Admin Panel Link */}
+        {isAdmin && (
+          <button
+            onClick={() => navigate('/admin')}
+            className="w-full p-4 bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl shadow-lg flex items-center gap-4 text-white"
+          >
+            <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+              <Crown className="w-6 h-6" />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="font-semibold">Admin Dashboard</p>
+              <p className="text-sm opacity-80">Manage orders & subscriptions</p>
+            </div>
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        )}
+
         {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-3">
           {[
@@ -108,7 +163,10 @@ const Account: React.FC = () => {
 
         {/* Settings & Logout */}
         <div className="space-y-2">
-          <button className="flex items-center gap-4 w-full p-4 bg-card rounded-xl shadow-card border border-border hover:bg-muted/50 active:bg-muted transition-colors">
+          <button 
+            onClick={() => navigate('/notifications/settings')}
+            className="flex items-center gap-4 w-full p-4 bg-card rounded-xl shadow-card border border-border hover:bg-muted/50 active:bg-muted transition-colors"
+          >
             <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">
               <Settings className="w-5 h-5 text-muted-foreground" />
             </div>
@@ -116,12 +174,17 @@ const Account: React.FC = () => {
             <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </button>
 
-          <button className="flex items-center gap-4 w-full p-4 bg-card rounded-xl shadow-card border border-border hover:bg-destructive/5 active:bg-destructive/10 transition-colors">
-            <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
-              <LogOut className="w-5 h-5 text-destructive" />
-            </div>
-            <span className="flex-1 text-left font-medium text-destructive">Logout</span>
-          </button>
+          {user && (
+            <button 
+              onClick={handleLogout}
+              className="flex items-center gap-4 w-full p-4 bg-card rounded-xl shadow-card border border-border hover:bg-destructive/5 active:bg-destructive/10 transition-colors"
+            >
+              <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
+                <LogOut className="w-5 h-5 text-destructive" />
+              </div>
+              <span className="flex-1 text-left font-medium text-destructive">Logout</span>
+            </button>
+          )}
         </div>
 
         {/* Contact Section */}
