@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowRight, Phone, ArrowLeft, RefreshCw, Shield, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,15 +6,24 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import logoImg from '@/assets/logo.png';
 import OTPInput from '@/components/OTPInput';
+import { useAuth } from '@/contexts/AuthContext';
 
 type LoginStep = 'phone' | 'otp';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const { user, signInWithPhone, verifyOTP } = useAuth();
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<LoginStep>('phone');
   const [resendTimer, setResendTimer] = useState(0);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   const startResendTimer = () => {
     setResendTimer(30);
@@ -39,8 +48,13 @@ const Login: React.FC = () => {
     
     setIsLoading(true);
     
-    // Simulate OTP send
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const { error } = await signInWithPhone(phone);
+    
+    if (error) {
+      toast.error(error.message || 'Failed to send OTP');
+      setIsLoading(false);
+      return;
+    }
     
     toast.success(`OTP sent to +91 ${phone}`);
     setIsLoading(false);
@@ -51,8 +65,13 @@ const Login: React.FC = () => {
   const handleVerifyOTP = async (otp: string) => {
     setIsLoading(true);
     
-    // Simulate OTP verification
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const { error } = await verifyOTP(phone, otp);
+    
+    if (error) {
+      toast.error(error.message || 'Invalid OTP');
+      setIsLoading(false);
+      return;
+    }
     
     toast.success('Login successful! Welcome back 🎉');
     setIsLoading(false);
@@ -63,10 +82,15 @@ const Login: React.FC = () => {
     if (resendTimer > 0) return;
     
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast.success('OTP resent successfully!');
+    const { error } = await signInWithPhone(phone);
+    
+    if (error) {
+      toast.error(error.message || 'Failed to resend OTP');
+    } else {
+      toast.success('OTP resent successfully!');
+      startResendTimer();
+    }
     setIsLoading(false);
-    startResendTimer();
   };
 
   return (
@@ -177,6 +201,13 @@ const Login: React.FC = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* SMS Provider Note */}
+              <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
+                <p className="text-xs text-amber-700 dark:text-amber-400">
+                  📱 Note: Phone OTP requires an SMS provider (Twilio) to be configured in Lovable Cloud settings.
+                </p>
               </div>
             </>
           ) : (
