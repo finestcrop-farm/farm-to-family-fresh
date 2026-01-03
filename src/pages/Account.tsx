@@ -164,7 +164,7 @@ const Account: React.FC = () => {
         {/* Settings & Logout */}
         <div className="space-y-2">
           <button 
-            onClick={() => navigate('/notifications/settings')}
+            onClick={() => navigate('/notification-settings')}
             className="flex items-center gap-4 w-full p-4 bg-card rounded-xl shadow-card border border-border hover:bg-muted/50 active:bg-muted transition-colors"
           >
             <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center">

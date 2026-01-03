@@ -26,6 +26,7 @@ import DietaryFilters from "./pages/DietaryFilters";
 import Admin from "./pages/Admin";
 import MyOrders from "./pages/MyOrders";
 import NotFound from "./pages/NotFound";
+import ComingSoon from "./pages/ComingSoon";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,14 @@ const App = () => (
               <Route path="/dietary-filters" element={<DietaryFilters />} />
               <Route path="/orders" element={<MyOrders />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/favorites" element={<ComingSoon title="Favorites" description="Your saved items will appear here." />} />
+              <Route path="/addresses" element={<ComingSoon title="Addresses" description="Manage your delivery addresses here." />} />
+              <Route path="/payments" element={<ComingSoon title="Wallet & Payments" description="UPI, cards & wallet setup is coming soon." />} />
+              <Route path="/rewards" element={<ComingSoon title="Rewards" description="Earn and redeem points here soon." />} />
+              <Route path="/help" element={<ComingSoon title="Help & Support" description="FAQs and support options are coming soon." />} />
+              <Route path="/rate" element={<ComingSoon title="Rate Us" description="Your feedback will help us improve." />} />
+              <Route path="/privacy" element={<ComingSoon title="Privacy Policy" description="Our terms and privacy policy will appear here." />} />
+              <Route path="/location" element={<ComingSoon title="Choose Location" description="Location selection is coming soon." />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
