@@ -3,7 +3,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import Onboarding from './Onboarding';
 import Home from './Home';
-import Login from './Login';
+import Auth from './Auth';
 
 const Index: React.FC = () => {
   const { onboardingCompleted } = useApp();
@@ -18,12 +18,12 @@ const Index: React.FC = () => {
     );
   }
 
-  // Show login screen if not authenticated
-  if (!user) {
-    return <Login />;
+  // Show onboarding (includes auth choice) if not completed and not logged in
+  if (!onboardingCompleted && !user) {
+    return <Auth />;
   }
 
-  // Show onboarding if not completed
+  // Show onboarding feature intro if logged in but didn't complete onboarding
   if (!onboardingCompleted) {
     return <Onboarding />;
   }

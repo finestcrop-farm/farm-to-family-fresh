@@ -9,8 +9,7 @@ import PWAInstallBanner from "@/components/PWAInstallBanner";
 import Splash from "./pages/Splash";
 import Welcome from "./pages/Welcome";
 import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
+import Auth from "./pages/Auth";
 import Categories from "./pages/Categories";
 import CategoryDetail from "./pages/CategoryDetail";
 import ProductDetail from "./pages/ProductDetail";
@@ -41,8 +40,9 @@ const App = () => (
             <Routes>
               <Route path="/splash" element={<Splash />} />
               <Route path="/welcome" element={<Welcome />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/login" element={<Auth />} />
+              <Route path="/signup" element={<Auth />} />
               <Route path="/" element={<Index />} />
               <Route path="/categories" element={<Categories />} />
               <Route path="/category/:categoryId" element={<CategoryDetail />} />
