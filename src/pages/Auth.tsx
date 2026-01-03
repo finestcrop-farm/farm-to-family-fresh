@@ -92,7 +92,12 @@ const Auth: React.FC = () => {
       : await signInWithPhone(phone);
     
     if (error) {
-      toast.error(error.message || 'Failed to send OTP');
+      const msg = error.message || 'Failed to send OTP';
+      if (/sms provider|twilio/i.test(msg)) {
+        toast.error('SMS OTP is temporarily unavailable. Please use Email or Google to sign in.');
+      } else {
+        toast.error(msg);
+      }
       setIsLoading(false);
       return;
     }
@@ -181,7 +186,12 @@ const Auth: React.FC = () => {
       : await signInWithPhone(phone);
     
     if (error) {
-      toast.error(error.message || 'Failed to resend OTP');
+      const msg = error.message || 'Failed to resend OTP';
+      if (/sms provider|twilio/i.test(msg)) {
+        toast.error('SMS OTP is temporarily unavailable. Please use Email or Google to sign in.');
+      } else {
+        toast.error(msg);
+      }
     } else {
       toast.success('OTP resent successfully!');
       startResendTimer();
