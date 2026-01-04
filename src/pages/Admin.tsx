@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Package, Users, ShoppingBag, TrendingUp,
-  RefreshCw, Eye, CheckCircle, XCircle, Truck, Clock
+  RefreshCw, CheckCircle, XCircle, Truck, Clock, Mail,
+  MessageSquare, Heart, MapPin
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,19 +31,43 @@ interface Subscription {
   next_delivery: string | null;
 }
 
+interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: string;
+  created_at: string;
+}
+
+interface Profile {
+  id: string;
+  user_id: string;
+  full_name: string | null;
+  phone: string | null;
+  created_at: string;
+}
+
+type TabType = 'orders' | 'subscriptions' | 'messages' | 'users';
+
 const Admin: React.FC = () => {
   const navigate = useNavigate();
   const { isAdmin, isLoading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const [users, setUsers] = useState<Profile[]>([]);
   const [stats, setStats] = useState({
     totalOrders: 0,
     pendingOrders: 0,
     activeSubscriptions: 0,
     totalRevenue: 0,
+    totalUsers: 0,
+    pendingMessages: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'orders' | 'subscriptions'>('orders');
+  const [activeTab, setActiveTab] = useState<TabType>('orders');
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -54,7 +79,7 @@ const Admin: React.FC = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Fetch all orders (admin has access to all)
+      // Fetch all orders
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('*')
@@ -74,17 +99,41 @@ const Admin: React.FC = () => {
       if (subsError) throw subsError;
       setSubscriptions(subsData || []);
 
+      // Fetch contact messages
+      const { data: messagesData, error: messagesError } = await supabase
+        .from('contact_messages')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (messagesError) throw messagesError;
+      setMessages(messagesData || []);
+
+      // Fetch users
+      const { data: usersData, error: usersError } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (usersError) throw usersError;
+      setUsers(usersData || []);
+
       // Calculate stats
       const totalOrders = ordersData?.length || 0;
       const pendingOrders = ordersData?.filter(o => o.status === 'pending').length || 0;
       const activeSubscriptions = subsData?.filter(s => s.status === 'active').length || 0;
       const totalRevenue = ordersData?.reduce((sum, o) => sum + Number(o.total_amount), 0) || 0;
+      const totalUsers = usersData?.length || 0;
+      const pendingMessages = messagesData?.filter(m => m.status === 'pending').length || 0;
 
       setStats({
         totalOrders,
         pendingOrders,
         activeSubscriptions,
         totalRevenue,
+        totalUsers,
+        pendingMessages,
       });
     } catch (error) {
       console.error('Error fetching admin data:', error);
@@ -116,6 +165,22 @@ const Admin: React.FC = () => {
     }
   };
 
+  const updateMessageStatus = async (messageId: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('contact_messages')
+        .update({ status })
+        .eq('id', messageId);
+
+      if (error) throw error;
+      toast.success('Message status updated');
+      fetchData();
+    } catch (error) {
+      console.error('Error updating message:', error);
+      toast.error('Failed to update message');
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -138,9 +203,17 @@ const Admin: React.FC = () => {
       case 'cancelled': return 'bg-red-100 text-red-700';
       case 'active': return 'bg-green-100 text-green-700';
       case 'paused': return 'bg-amber-100 text-amber-700';
+      case 'resolved': return 'bg-green-100 text-green-700';
       default: return 'bg-gray-100 text-gray-700';
     }
   };
+
+  const tabs: { id: TabType; label: string; icon: React.ElementType; count?: number }[] = [
+    { id: 'orders', label: 'Orders', icon: Package, count: stats.pendingOrders },
+    { id: 'subscriptions', label: 'Subs', icon: RefreshCw },
+    { id: 'messages', label: 'Messages', icon: MessageSquare, count: stats.pendingMessages },
+    { id: 'users', label: 'Users', icon: Users },
+  ];
 
   return (
     <div className="min-h-screen bg-background pb-8">
@@ -155,7 +228,7 @@ const Admin: React.FC = () => {
           </button>
           <div className="flex-1">
             <h1 className="font-heading text-xl font-bold">Admin Dashboard</h1>
-            <p className="text-sm opacity-80">Manage orders & subscriptions</p>
+            <p className="text-sm opacity-80">Manage your store</p>
           </div>
           <button 
             onClick={fetchData}
@@ -169,51 +242,49 @@ const Admin: React.FC = () => {
 
       <main className="px-4 py-4 space-y-6">
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-2">
           {[
-            { label: 'Total Orders', value: stats.totalOrders, icon: Package, color: 'text-primary' },
+            { label: 'Orders', value: stats.totalOrders, icon: Package, color: 'text-primary' },
             { label: 'Pending', value: stats.pendingOrders, icon: Clock, color: 'text-amber-500' },
-            { label: 'Subscriptions', value: stats.activeSubscriptions, icon: RefreshCw, color: 'text-purple-500' },
-            { label: 'Revenue', value: `₹${stats.totalRevenue.toFixed(0)}`, icon: TrendingUp, color: 'text-green-500' },
+            { label: 'Revenue', value: `₹${(stats.totalRevenue / 1000).toFixed(1)}k`, icon: TrendingUp, color: 'text-green-500' },
+            { label: 'Users', value: stats.totalUsers, icon: Users, color: 'text-blue-500' },
+            { label: 'Subs', value: stats.activeSubscriptions, icon: RefreshCw, color: 'text-purple-500' },
+            { label: 'Messages', value: stats.pendingMessages, icon: Mail, color: 'text-orange-500' },
           ].map((stat) => (
-            <div key={stat.label} className="p-4 bg-card rounded-xl shadow-card border border-border">
-              <stat.icon className={cn("w-5 h-5 mb-2", stat.color)} />
-              <p className="font-bold text-xl text-foreground">{stat.value}</p>
-              <p className="text-xs text-muted-foreground">{stat.label}</p>
+            <div key={stat.label} className="p-3 bg-card rounded-xl shadow-card border border-border">
+              <stat.icon className={cn("w-4 h-4 mb-1", stat.color)} />
+              <p className="font-bold text-lg text-foreground">{stat.value}</p>
+              <p className="text-[10px] text-muted-foreground">{stat.label}</p>
             </div>
           ))}
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 bg-muted p-1 rounded-xl">
-          <button
-            onClick={() => setActiveTab('orders')}
-            className={cn(
-              "flex-1 py-2.5 rounded-lg font-medium text-sm transition-colors",
-              activeTab === 'orders'
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground"
-            )}
-          >
-            <Package className="w-4 h-4 inline mr-2" />
-            Orders
-          </button>
-          <button
-            onClick={() => setActiveTab('subscriptions')}
-            className={cn(
-              "flex-1 py-2.5 rounded-lg font-medium text-sm transition-colors",
-              activeTab === 'subscriptions'
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground"
-            )}
-          >
-            <RefreshCw className="w-4 h-4 inline mr-2" />
-            Subscriptions
-          </button>
+        <div className="flex gap-1 bg-muted p-1 rounded-xl overflow-x-auto">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "flex-1 py-2 px-3 rounded-lg font-medium text-xs transition-colors flex items-center justify-center gap-1 whitespace-nowrap",
+                activeTab === tab.id
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground"
+              )}
+            >
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+              {tab.count !== undefined && tab.count > 0 && (
+                <span className="bg-destructive text-destructive-foreground text-[10px] px-1.5 rounded-full">
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
 
         {/* Content */}
-        {activeTab === 'orders' ? (
+        {activeTab === 'orders' && (
           <div className="space-y-3">
             {orders.length === 0 ? (
               <div className="text-center py-12">
@@ -264,7 +335,7 @@ const Admin: React.FC = () => {
                       {order.status === 'preparing' && (
                         <Button size="sm" className="flex-1" onClick={() => updateOrderStatus(order.id, 'out_for_delivery')}>
                           <Truck className="w-4 h-4 mr-1" />
-                          Out for Delivery
+                          Dispatch
                         </Button>
                       )}
                       {order.status === 'out_for_delivery' && (
@@ -287,7 +358,9 @@ const Admin: React.FC = () => {
               ))
             )}
           </div>
-        ) : (
+        )}
+
+        {activeTab === 'subscriptions' && (
           <div className="space-y-3">
             {subscriptions.length === 0 ? (
               <div className="text-center py-12">
@@ -312,6 +385,75 @@ const Admin: React.FC = () => {
                     <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getStatusColor(sub.status))}>
                       {sub.status}
                     </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {activeTab === 'messages' && (
+          <div className="space-y-3">
+            {messages.length === 0 ? (
+              <div className="text-center py-12">
+                <MessageSquare className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground">No messages yet</p>
+              </div>
+            ) : (
+              messages.map((msg) => (
+                <div key={msg.id} className="bg-card rounded-xl p-4 shadow-card border border-border">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className="font-semibold text-foreground">{msg.name}</p>
+                      <p className="text-xs text-muted-foreground">{msg.email}</p>
+                    </div>
+                    <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getStatusColor(msg.status))}>
+                      {msg.status}
+                    </span>
+                  </div>
+                  <p className="font-medium text-sm text-foreground">{msg.subject}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{msg.message}</p>
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(msg.created_at).toLocaleString()}
+                    </p>
+                    {msg.status === 'pending' && (
+                      <Button size="sm" onClick={() => updateMessageStatus(msg.id, 'resolved')}>
+                        Mark Resolved
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {activeTab === 'users' && (
+          <div className="space-y-3">
+            {users.length === 0 ? (
+              <div className="text-center py-12">
+                <Users className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground">No users yet</p>
+              </div>
+            ) : (
+              users.map((user) => (
+                <div key={user.id} className="bg-card rounded-xl p-4 shadow-card border border-border">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Users className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-foreground truncate">
+                        {user.full_name || 'No name'}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {user.phone || 'No phone'}
+                      </p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(user.created_at).toLocaleDateString()}
+                    </p>
                   </div>
                 </div>
               ))
