@@ -55,7 +55,7 @@ const Auth: React.FC = () => {
 
   const handleGuestContinue = () => {
     completeOnboarding();
-    navigate('/');
+    navigate('/home');
     toast.success('Welcome! You can create an account anytime.');
   };
 
@@ -65,14 +65,14 @@ const Auth: React.FC = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}/home`,
         },
       });
       if (error) {
-        toast.error(error.message || 'Google sign-in failed');
+        toast.error(error.message || 'Google sign-in failed. Please use Email to continue.');
       }
     } catch (error: any) {
-      toast.error(error.message || 'Google sign-in failed');
+      toast.error(error.message || 'Google sign-in failed. Please use Email to continue.');
     }
     setIsLoading(false);
   };
@@ -125,7 +125,7 @@ const Auth: React.FC = () => {
     
     try {
       if (mode === 'signup') {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -138,7 +138,13 @@ const Auth: React.FC = () => {
         
         if (error) {
           toast.error(error.message);
-        } else {
+        } else if (data.user && data.session) {
+          // Auto-confirm is enabled, user is logged in immediately
+          toast.success('Account created! Welcome! 🎉');
+          completeOnboarding();
+          navigate('/');
+        } else if (data.user && !data.session) {
+          // Email confirmation required
           toast.success('Account created! Check your email to confirm.');
         }
       } else {
@@ -151,6 +157,7 @@ const Auth: React.FC = () => {
           toast.error(error.message);
         } else {
           toast.success('Welcome back! 🎉');
+          completeOnboarding();
           navigate('/');
         }
       }
@@ -174,7 +181,8 @@ const Auth: React.FC = () => {
     
     toast.success(mode === 'signup' ? 'Account created! 🎉' : 'Welcome back! 🎉');
     setIsLoading(false);
-    navigate('/');
+    completeOnboarding();
+    navigate('/home');
   };
 
   const handleResendOTP = async () => {
