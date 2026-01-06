@@ -1,13 +1,16 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, ChevronDown, Bell, Sparkles, TrendingUp, Clock, Percent, ChevronRight, Gift, Zap } from 'lucide-react';
+import { MapPin, ChevronDown, Bell, Sparkles, TrendingUp, Clock, Percent, ChevronRight, Gift, Zap, Tag } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import SearchBar from '@/components/SearchBar';
 import CategoryCard from '@/components/CategoryCard';
 import ProductCard from '@/components/ProductCard';
 import BottomNav from '@/components/BottomNav';
+import OfferCard from '@/components/OfferCard';
+import NotificationCard, { NotificationItem } from '@/components/NotificationCard';
 import { categories } from '@/data/categories';
 import { getFeaturedProducts, getOfferProducts, getBestSellers } from '@/data/products';
+import { getActiveOffers } from '@/data/offers';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import logoImg from '@/assets/logo.png';
@@ -18,6 +21,28 @@ const Home: React.FC = () => {
   const featuredProducts = getFeaturedProducts();
   const offerProducts = getOfferProducts();
   const bestSellers = getBestSellers();
+  const activeOffers = getActiveOffers().slice(0, 3);
+  
+  // Sample notifications for home page
+  const homeNotifications: NotificationItem[] = [
+    {
+      id: '1',
+      type: 'offer',
+      title: '🔥 Flash Sale Live!',
+      message: 'Get 30% off on fresh vegetables. Limited time only!',
+      time: 'Now',
+      read: false,
+      actionUrl: '/offers',
+    },
+    {
+      id: '2',
+      type: 'delivery',
+      title: 'Free Delivery Today',
+      message: 'Orders above ₹499 get free delivery. Order now!',
+      time: '2 hrs ago',
+      read: false,
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -94,7 +119,7 @@ const Home: React.FC = () => {
         <div className="grid grid-cols-4 gap-2">
           {[
             { icon: Clock, label: '2-4 hrs', desc: 'Delivery', color: 'bg-primary/10 text-primary', iconBg: 'bg-primary', link: null },
-            { icon: Percent, label: 'Upto 40%', desc: 'Savings', color: 'bg-accent/10 text-accent', iconBg: 'bg-accent', link: null },
+            { icon: Tag, label: 'Offers', desc: 'Save 40%', color: 'bg-accent/10 text-accent', iconBg: 'bg-accent', link: '/offers' },
             { icon: Gift, label: 'Subscribe', desc: 'Save 15%', color: 'bg-fresh/10 text-fresh', iconBg: 'bg-fresh', link: '/subscriptions' },
             { icon: Zap, label: 'Diet', desc: 'Filters', color: 'bg-primary/10 text-primary', iconBg: 'bg-primary', link: '/dietary-filters' },
           ].map((stat, index) => (
@@ -112,6 +137,61 @@ const Home: React.FC = () => {
             </button>
           ))}
         </div>
+
+        {/* Notification Cards */}
+        {homeNotifications.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-heading text-lg font-bold text-foreground flex items-center gap-2">
+                <Bell className="w-5 h-5 text-primary" />
+                Updates for You
+              </h2>
+              <button 
+                onClick={() => navigate('/notifications')}
+                className="text-sm text-primary font-semibold hover:underline"
+              >
+                View All
+              </button>
+            </div>
+            <div className="space-y-2">
+              {homeNotifications.map((notification) => (
+                <NotificationCard
+                  key={notification.id}
+                  notification={notification}
+                  variant="compact"
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Offer Cards */}
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-heading text-lg font-bold text-foreground flex items-center gap-2">
+              <Percent className="w-5 h-5 text-accent" />
+              Today's Offers
+            </h2>
+            <button 
+              onClick={() => navigate('/offers')}
+              className="text-sm text-primary font-semibold hover:underline flex items-center gap-1"
+            >
+              All Offers
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-4 px-4 pb-2">
+            {activeOffers.map((offer, index) => (
+              <div 
+                key={offer.id} 
+                className="flex-shrink-0 w-[280px] animate-fade-in"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <OfferCard offer={offer} variant="compact" />
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* Quick Categories */}
         <section>
