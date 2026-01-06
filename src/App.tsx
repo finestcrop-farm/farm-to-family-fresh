@@ -31,6 +31,7 @@ import Favorites from "./pages/Favorites";
 import Addresses from "./pages/Addresses";
 import Location from "./pages/Location";
 import Help from "./pages/Help";
+import Offers from "./pages/Offers";
 
 const queryClient = new QueryClient();
 
@@ -68,7 +69,7 @@ const App = () => (
               <Route path="/addresses" element={<Addresses />} />
               <Route path="/location" element={<Location />} />
               <Route path="/help" element={<Help />} />
-              <Route path="/payments" element={<ComingSoon title="Wallet & Payments" description="UPI, cards & wallet setup is coming soon." />} />
+              <Route path="/offers" element={<Offers />} />
               <Route path="/rewards" element={<ComingSoon title="Rewards" description="Earn and redeem points here soon." />} />
               <Route path="/rate" element={<ComingSoon title="Rate Us" description="Your feedback will help us improve." />} />
               <Route path="/privacy" element={<ComingSoon title="Privacy Policy" description="Our terms and privacy policy will appear here." />} />
