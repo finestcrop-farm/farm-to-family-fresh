@@ -1,19 +1,21 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Search, ShoppingCart, User, Grid3X3 } from 'lucide-react';
+import { Home, Search, ShoppingCart, User, Bell } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
+import { useNotifications } from '@/hooks/useNotifications';
 import { cn } from '@/lib/utils';
 
 const BottomNav: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { cartItemCount } = useApp();
+  const { unreadCount } = useNotifications();
 
   const navItems = [
     { icon: Home, label: 'Home', path: '/' },
-    { icon: Grid3X3, label: 'Categories', path: '/categories' },
     { icon: Search, label: 'Search', path: '/search' },
     { icon: ShoppingCart, label: 'Cart', path: '/cart', badge: cartItemCount },
+    { icon: Bell, label: 'Alerts', path: '/notifications', badge: unreadCount },
     { icon: User, label: 'Account', path: '/account' },
   ];
 
