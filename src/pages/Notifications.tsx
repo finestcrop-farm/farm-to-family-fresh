@@ -2,72 +2,31 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Bell, BellOff, Package, Truck, Tag, Gift, 
-  MessageCircle, Settings, Check, Trash2, X
+  MessageCircle, Settings, Check, Trash2, X, Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-
-interface Notification {
-  id: string;
-  type: 'order' | 'delivery' | 'offer' | 'reward' | 'message';
-  title: string;
-  message: string;
-  time: string;
-  read: boolean;
-  actionUrl?: string;
-}
+import { useNotifications, type AppNotification } from '@/hooks/useNotifications';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Notifications: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
   
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'delivery',
-      title: 'Order Out for Delivery',
-      message: 'Your order #OPN7X8K2 is on the way. Expected delivery in 15 mins.',
-      time: '2 min ago',
-      read: false,
-      actionUrl: '/order-tracking',
-    },
-    {
-      id: '2',
-      type: 'offer',
-      title: 'Flash Sale! 🔥',
-      message: 'Get 30% off on fresh vegetables. Use code FRESH30. Valid today only!',
-      time: '1 hour ago',
-      read: false,
-    },
-    {
-      id: '3',
-      type: 'order',
-      title: 'Order Confirmed',
-      message: 'Your order #OPN5M9L3 has been confirmed and is being prepared.',
-      time: '3 hours ago',
-      read: true,
-    },
-    {
-      id: '4',
-      type: 'reward',
-      title: 'You earned 50 points! 🎉',
-      message: 'Great job! Complete 2 more orders to unlock Silver membership.',
-      time: 'Yesterday',
-      read: true,
-    },
-    {
-      id: '5',
-      type: 'message',
-      title: 'Delivery Update',
-      message: 'Your preferred delivery slot is now available for tomorrow.',
-      time: '2 days ago',
-      read: true,
-    },
-  ]);
+  const {
+    notifications,
+    isLoading,
+    unreadCount,
+    markAsRead,
+    markAllAsRead: markAllAsReadDb,
+    deleteNotification: deleteNotificationDb,
+    clearAll: clearAllDb,
+  } = useNotifications();
 
-  const getIcon = (type: Notification['type']) => {
+  const getIcon = (type: AppNotification['type']) => {
     switch (type) {
       case 'order': return Package;
       case 'delivery': return Truck;
@@ -77,7 +36,7 @@ const Notifications: React.FC = () => {
     }
   };
 
-  const getIconColor = (type: Notification['type']) => {
+  const getIconColor = (type: AppNotification['type']) => {
     switch (type) {
       case 'order': return 'bg-blue-500/10 text-blue-500';
       case 'delivery': return 'bg-primary/10 text-primary';
@@ -87,24 +46,18 @@ const Notifications: React.FC = () => {
     }
   };
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
-    );
-  };
-
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const handleMarkAllAsRead = async () => {
+    await markAllAsReadDb();
     toast.success('All notifications marked as read');
   };
 
-  const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+  const handleDeleteNotification = async (id: string) => {
+    await deleteNotificationDb(id);
     toast.success('Notification deleted');
   };
 
-  const clearAll = () => {
-    setNotifications([]);
+  const handleClearAll = async () => {
+    await clearAllDb();
     toast.success('All notifications cleared');
   };
 
@@ -127,7 +80,23 @@ const Notifications: React.FC = () => {
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  // Get action URL from notification data
+  const getActionUrl = (notification: AppNotification): string | undefined => {
+    const data = notification.data as Record<string, unknown> | undefined;
+    return data?.actionUrl as string | undefined;
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
+        <div className="text-center p-6">
+          <Bell className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+          <h2 className="text-lg font-semibold mb-2">Login to see notifications</h2>
+          <Button onClick={() => navigate('/auth')}>Login</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-muted/30 pb-8">
@@ -151,7 +120,7 @@ const Notifications: React.FC = () => {
           <div className="flex items-center gap-2">
             {unreadCount > 0 && (
               <button 
-                onClick={markAllAsRead}
+                onClick={handleMarkAllAsRead}
                 className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
               >
                 <Check className="w-5 h-5" />
@@ -200,7 +169,11 @@ const Notifications: React.FC = () => {
 
       {/* Notifications List */}
       <div className="p-4 space-y-3">
-        {notifications.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : notifications.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
               <BellOff className="w-10 h-10 text-muted-foreground" />
@@ -213,6 +186,7 @@ const Notifications: React.FC = () => {
         ) : (
           <>
             {notifications.map((notification) => {
+              const actionUrl = getActionUrl(notification);
               const Icon = getIcon(notification.type);
               return (
                 <div
@@ -225,8 +199,8 @@ const Notifications: React.FC = () => {
                   )}
                   onClick={() => {
                     markAsRead(notification.id);
-                    if (notification.actionUrl) {
-                      navigate(notification.actionUrl);
+                    if (actionUrl) {
+                      navigate(actionUrl);
                     }
                   }}
                 >
@@ -256,7 +230,7 @@ const Notifications: React.FC = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        deleteNotification(notification.id);
+                        handleDeleteNotification(notification.id);
                       }}
                       className="p-1 text-muted-foreground hover:text-destructive transition-colors self-start"
                     >
@@ -272,7 +246,7 @@ const Notifications: React.FC = () => {
 
             {notifications.length > 0 && (
               <button
-                onClick={clearAll}
+                onClick={handleClearAll}
                 className="w-full py-3 text-sm text-muted-foreground hover:text-destructive transition-colors"
               >
                 Clear All Notifications
