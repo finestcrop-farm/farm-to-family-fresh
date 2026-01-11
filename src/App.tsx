@@ -50,10 +50,10 @@ const App = () => (
               <Route path="/login" element={<Auth />} />
               <Route path="/signup" element={<Auth />} />
               <Route path="/" element={<Index />} />
+              <Route path="/home" element={<Index />} />
               <Route path="/categories" element={<Categories />} />
               <Route path="/category/:categoryId" element={<CategoryDetail />} />
               <Route path="/product/:productId" element={<ProductDetail />} />
-              <Route path="/search" element={<Search />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/account" element={<Account />} />
               <Route path="/checkout" element={<Checkout />} />
