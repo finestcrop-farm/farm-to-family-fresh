@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Package, Users, ShoppingBag, TrendingUp,
   RefreshCw, CheckCircle, XCircle, Truck, Clock, Mail,
-  MessageSquare, Heart, MapPin
+  MessageSquare, Heart, MapPin, Bell, Send, Megaphone
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -49,7 +51,7 @@ interface Profile {
   created_at: string;
 }
 
-type TabType = 'orders' | 'subscriptions' | 'messages' | 'users';
+type TabType = 'orders' | 'subscriptions' | 'messages' | 'users' | 'notifications';
 
 const Admin: React.FC = () => {
   const navigate = useNavigate();
@@ -68,6 +70,9 @@ const Admin: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('orders');
+  const [notificationTitle, setNotificationTitle] = useState('');
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [isSendingNotification, setIsSendingNotification] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -181,6 +186,53 @@ const Admin: React.FC = () => {
     }
   };
 
+  const sendPromotionalNotification = async () => {
+    if (!notificationTitle.trim() || !notificationMessage.trim()) {
+      toast.error('Please fill in both title and message');
+      return;
+    }
+
+    setIsSendingNotification(true);
+    try {
+      // Get all user IDs from profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id');
+
+      if (profilesError) throw profilesError;
+
+      if (!profiles || profiles.length === 0) {
+        toast.error('No users found to send notifications');
+        return;
+      }
+
+      // Create notifications for all users
+      const notifications = profiles.map((profile) => ({
+        user_id: profile.user_id,
+        title: notificationTitle.trim(),
+        message: notificationMessage.trim(),
+        type: 'promotion',
+        read: false,
+        data: { sent_by: 'admin', sent_at: new Date().toISOString() },
+      }));
+
+      const { error: insertError } = await supabase
+        .from('notifications')
+        .insert(notifications);
+
+      if (insertError) throw insertError;
+
+      toast.success(`Notification sent to ${profiles.length} users!`);
+      setNotificationTitle('');
+      setNotificationMessage('');
+    } catch (error) {
+      console.error('Error sending notification:', error);
+      toast.error('Failed to send notification');
+    } finally {
+      setIsSendingNotification(false);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -213,6 +265,7 @@ const Admin: React.FC = () => {
     { id: 'subscriptions', label: 'Subs', icon: RefreshCw },
     { id: 'messages', label: 'Messages', icon: MessageSquare, count: stats.pendingMessages },
     { id: 'users', label: 'Users', icon: Users },
+    { id: 'notifications', label: 'Promo', icon: Megaphone },
   ];
 
   return (
@@ -458,6 +511,79 @@ const Admin: React.FC = () => {
                 </div>
               ))
             )}
+          </div>
+        )}
+
+        {activeTab === 'notifications' && (
+          <div className="space-y-4">
+            <div className="bg-card rounded-xl p-4 shadow-card border border-border">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Megaphone className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Send Promotional Alert</h3>
+                  <p className="text-xs text-muted-foreground">Notify all users instantly</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1 block">
+                    Notification Title
+                  </label>
+                  <Input
+                    placeholder="e.g., Flash Sale Today!"
+                    value={notificationTitle}
+                    onChange={(e) => setNotificationTitle(e.target.value)}
+                    maxLength={100}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1 block">
+                    Message
+                  </label>
+                  <Textarea
+                    placeholder="e.g., Get 50% off on all vegetables today only!"
+                    value={notificationMessage}
+                    onChange={(e) => setNotificationMessage(e.target.value)}
+                    rows={3}
+                    maxLength={500}
+                  />
+                </div>
+
+                <Button 
+                  className="w-full"
+                  onClick={sendPromotionalNotification}
+                  disabled={isSendingNotification || !notificationTitle.trim() || !notificationMessage.trim()}
+                >
+                  {isSendingNotification ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Send to All Users ({stats.totalUsers})
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            <div className="bg-muted/50 rounded-xl p-4 border border-border">
+              <div className="flex items-start gap-3">
+                <Bell className="w-5 h-5 text-muted-foreground mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">How it works</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Promotional notifications are delivered instantly to all registered users via the in-app notification system. Users will see an unread badge on their notifications tab.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </main>
