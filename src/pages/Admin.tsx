@@ -72,6 +72,56 @@ const Admin: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('orders');
   const [notificationTitle, setNotificationTitle] = useState('');
   const [notificationMessage, setNotificationMessage] = useState('');
+
+  const notificationTemplates = [
+    {
+      id: 'flash-sale',
+      icon: '⚡',
+      label: 'Flash Sale',
+      title: '⚡ Flash Sale Alert!',
+      message: 'Limited time offer! Get up to 50% off on selected items. Shop now before stocks run out!',
+    },
+    {
+      id: 'new-arrivals',
+      icon: '✨',
+      label: 'New Arrivals',
+      title: '✨ Fresh Arrivals Just Landed!',
+      message: 'Check out our latest collection of fresh produce and grocery essentials. Order now for same-day delivery!',
+    },
+    {
+      id: 'weekend-deal',
+      icon: '🎉',
+      label: 'Weekend Deal',
+      title: '🎉 Weekend Special Deals!',
+      message: 'Enjoy exclusive weekend discounts on your favorite products. Valid Saturday & Sunday only!',
+    },
+    {
+      id: 'free-delivery',
+      icon: '🚚',
+      label: 'Free Delivery',
+      title: '🚚 Free Delivery Today!',
+      message: 'No minimum order required for free delivery today. Order now and save on delivery charges!',
+    },
+    {
+      id: 'loyalty-reward',
+      icon: '🎁',
+      label: 'Loyalty Reward',
+      title: '🎁 Special Reward for You!',
+      message: 'Thank you for being a valued customer! Enjoy an exclusive discount on your next order.',
+    },
+    {
+      id: 'low-stock',
+      icon: '🔥',
+      label: 'Low Stock Alert',
+      title: '🔥 Selling Fast - Limited Stock!',
+      message: 'Popular items are running low! Order now before they sell out. Don\'t miss out!',
+    },
+  ];
+
+  const applyTemplate = (template: typeof notificationTemplates[0]) => {
+    setNotificationTitle(template.title);
+    setNotificationMessage(template.message);
+  };
   const [isSendingNotification, setIsSendingNotification] = useState(false);
 
   useEffect(() => {
@@ -516,6 +566,23 @@ const Admin: React.FC = () => {
 
         {activeTab === 'notifications' && (
           <div className="space-y-4">
+            {/* Quick Templates */}
+            <div className="bg-card rounded-xl p-4 shadow-card border border-border">
+              <h3 className="font-semibold text-foreground mb-3">Quick Templates</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {notificationTemplates.map((template) => (
+                  <button
+                    key={template.id}
+                    onClick={() => applyTemplate(template)}
+                    className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left border border-transparent hover:border-primary/20"
+                  >
+                    <span className="text-xl">{template.icon}</span>
+                    <span className="text-sm font-medium text-foreground">{template.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="bg-card rounded-xl p-4 shadow-card border border-border">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
