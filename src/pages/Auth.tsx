@@ -55,7 +55,7 @@ const Auth: React.FC = () => {
 
   const handleGuestContinue = () => {
     completeOnboarding();
-    navigate('/home');
+    navigate('/');
     toast.success('Welcome! You can create an account anytime.');
   };
 
@@ -65,7 +65,7 @@ const Auth: React.FC = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/home`,
+          redirectTo: `${window.location.origin}/`,
         },
       });
       if (error) {
@@ -182,7 +182,7 @@ const Auth: React.FC = () => {
     toast.success(mode === 'signup' ? 'Account created! 🎉' : 'Welcome back! 🎉');
     setIsLoading(false);
     completeOnboarding();
-    navigate('/home');
+    navigate('/');
   };
 
   const handleResendOTP = async () => {

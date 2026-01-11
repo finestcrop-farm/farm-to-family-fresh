@@ -134,7 +134,7 @@ const Favorites: React.FC = () => {
             <p className="text-muted-foreground text-center mb-6">
               Start adding products you love!
             </p>
-            <Button onClick={() => navigate('/home')}>Browse Products</Button>
+            <Button onClick={() => navigate('/')}>Browse Products</Button>
           </div>
         ) : (
           <div className="space-y-3">
