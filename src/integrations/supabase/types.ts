@@ -283,6 +283,42 @@ export type Database = {
         }
         Relationships: []
       }
+      promotional_notification_history: {
+        Row: {
+          id: string
+          message: string
+          push_failure_count: number | null
+          push_sent: boolean
+          push_success_count: number | null
+          recipient_count: number
+          sent_at: string
+          sent_by: string | null
+          title: string
+        }
+        Insert: {
+          id?: string
+          message: string
+          push_failure_count?: number | null
+          push_sent?: boolean
+          push_success_count?: number | null
+          recipient_count?: number
+          sent_at?: string
+          sent_by?: string | null
+          title: string
+        }
+        Update: {
+          id?: string
+          message?: string
+          push_failure_count?: number | null
+          push_sent?: boolean
+          push_success_count?: number | null
+          recipient_count?: number
+          sent_at?: string
+          sent_by?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           created_at: string

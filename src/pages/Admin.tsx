@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Package, Users, ShoppingBag, TrendingUp,
   RefreshCw, CheckCircle, XCircle, Truck, Clock, Mail,
-  MessageSquare, Heart, MapPin, Bell, Send, Megaphone
+  MessageSquare, Heart, MapPin, Bell, Send, Megaphone, History
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -51,7 +51,18 @@ interface Profile {
   created_at: string;
 }
 
-type TabType = 'orders' | 'subscriptions' | 'messages' | 'users' | 'notifications';
+interface PromoHistory {
+  id: string;
+  title: string;
+  message: string;
+  recipient_count: number;
+  sent_at: string;
+  push_sent: boolean;
+  push_success_count: number | null;
+  push_failure_count: number | null;
+}
+
+type TabType = 'orders' | 'subscriptions' | 'messages' | 'users' | 'notifications' | 'history';
 
 const Admin: React.FC = () => {
   const navigate = useNavigate();
@@ -72,6 +83,7 @@ const Admin: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('orders');
   const [notificationTitle, setNotificationTitle] = useState('');
   const [notificationMessage, setNotificationMessage] = useState('');
+  const [promoHistory, setPromoHistory] = useState<PromoHistory[]>([]);
 
   const notificationTemplates = [
     {
@@ -174,6 +186,16 @@ const Admin: React.FC = () => {
       if (usersError) throw usersError;
       setUsers(usersData || []);
 
+      // Fetch promotional notification history
+      const { data: historyData, error: historyError } = await supabase
+        .from('promotional_notification_history')
+        .select('*')
+        .order('sent_at', { ascending: false })
+        .limit(50);
+
+      if (historyError) console.error('Error fetching promo history:', historyError);
+      setPromoHistory((historyData as PromoHistory[]) || []);
+
       // Calculate stats
       const totalOrders = ordersData?.length || 0;
       const pendingOrders = ordersData?.filter(o => o.status === 'pending').length || 0;
@@ -256,12 +278,14 @@ const Admin: React.FC = () => {
         return;
       }
 
+      const recipientCount = profiles.length;
+
       // Create notifications for all users
       const notifications = profiles.map((profile) => ({
         user_id: profile.user_id,
         title: notificationTitle.trim(),
         message: notificationMessage.trim(),
-        type: 'promotion',
+        type: 'offer',
         read: false,
         data: { sent_by: 'admin', sent_at: new Date().toISOString() },
       }));
@@ -272,9 +296,41 @@ const Admin: React.FC = () => {
 
       if (insertError) throw insertError;
 
-      toast.success(`Notification sent to ${profiles.length} users!`);
+      // Send push notifications via edge function
+      let pushResult = { pushSent: false, successCount: 0, failureCount: 0 };
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        const response = await supabase.functions.invoke('send-push-notification', {
+          body: {
+            title: notificationTitle.trim(),
+            message: notificationMessage.trim(),
+          },
+        });
+        if (response.data) {
+          pushResult = response.data;
+        }
+      } catch (pushError) {
+        console.error('Push notification error:', pushError);
+      }
+
+      // Log to history
+      const { error: historyError } = await supabase
+        .from('promotional_notification_history')
+        .insert({
+          title: notificationTitle.trim(),
+          message: notificationMessage.trim(),
+          recipient_count: recipientCount,
+          push_sent: pushResult.pushSent,
+          push_success_count: pushResult.successCount,
+          push_failure_count: pushResult.failureCount,
+        });
+
+      if (historyError) console.error('Error logging to history:', historyError);
+
+      toast.success(`Notification sent to ${recipientCount} users!${pushResult.pushSent ? ` (${pushResult.successCount} push delivered)` : ''}`);
       setNotificationTitle('');
       setNotificationMessage('');
+      fetchData(); // Refresh history
     } catch (error) {
       console.error('Error sending notification:', error);
       toast.error('Failed to send notification');
@@ -316,6 +372,7 @@ const Admin: React.FC = () => {
     { id: 'messages', label: 'Messages', icon: MessageSquare, count: stats.pendingMessages },
     { id: 'users', label: 'Users', icon: Users },
     { id: 'notifications', label: 'Promo', icon: Megaphone },
+    { id: 'history', label: 'History', icon: History, count: promoHistory.length },
   ];
 
   return (
@@ -646,11 +703,71 @@ const Admin: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-foreground">How it works</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Promotional notifications are delivered instantly to all registered users via the in-app notification system. Users will see an unread badge on their notifications tab.
+                    Promotional notifications are delivered instantly to all registered users via the in-app notification system. Push notifications are also sent to devices with FCM tokens registered.
                   </p>
                 </div>
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'history' && (
+          <div className="space-y-3">
+            {promoHistory.length === 0 ? (
+              <div className="text-center py-12">
+                <History className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground">No promotional notifications sent yet</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Send your first promo from the Promo tab
+                </p>
+              </div>
+            ) : (
+              promoHistory.map((promo) => (
+                <div key={promo.id} className="bg-card rounded-xl p-4 shadow-card border border-border">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1 min-w-0 mr-3">
+                      <p className="font-semibold text-foreground truncate">{promo.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(promo.sent_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="bg-primary/10 text-primary text-xs font-medium px-2 py-1 rounded-full">
+                        {promo.recipient_count} users
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                    {promo.message}
+                  </p>
+
+                  <div className="flex items-center gap-3 text-xs">
+                    <span className="flex items-center gap-1 text-muted-foreground">
+                      <Bell className="w-3 h-3" />
+                      In-app: {promo.recipient_count}
+                    </span>
+                    {promo.push_sent && (
+                      <span className="flex items-center gap-1 text-green-600">
+                        <Send className="w-3 h-3" />
+                        Push: {promo.push_success_count || 0} sent
+                      </span>
+                    )}
+                    {promo.push_sent && (promo.push_failure_count || 0) > 0 && (
+                      <span className="flex items-center gap-1 text-amber-600">
+                        <XCircle className="w-3 h-3" />
+                        {promo.push_failure_count} failed
+                      </span>
+                    )}
+                    {!promo.push_sent && (
+                      <span className="text-muted-foreground italic">
+                        No push (FCM not configured)
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         )}
       </main>
