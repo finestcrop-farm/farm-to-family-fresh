@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Package, Users, ShoppingBag, TrendingUp,
   RefreshCw, CheckCircle, XCircle, Truck, Clock, Mail,
-  MessageSquare, Heart, MapPin, Bell, Send, Megaphone, History
+  MessageSquare, Bell, Send, Megaphone, History, 
+  Settings, FileText, BarChart3, Plus
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,6 +13,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+
+// Admin Components
+import ProductsManager from '@/components/admin/ProductsManager';
+import DocumentUpload from '@/components/admin/DocumentUpload';
+import AdminAnalytics from '@/components/admin/AdminAnalytics';
+import AdminSettings from '@/components/admin/AdminSettings';
 
 interface Order {
   id: string;
@@ -62,7 +69,7 @@ interface PromoHistory {
   push_failure_count: number | null;
 }
 
-type TabType = 'orders' | 'subscriptions' | 'messages' | 'users' | 'notifications' | 'history';
+type TabType = 'dashboard' | 'products' | 'orders' | 'subscriptions' | 'messages' | 'users' | 'documents' | 'notifications' | 'history' | 'settings';
 
 const Admin: React.FC = () => {
   const navigate = useNavigate();
@@ -80,10 +87,11 @@ const Admin: React.FC = () => {
     pendingMessages: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabType>('orders');
+  const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [notificationTitle, setNotificationTitle] = useState('');
   const [notificationMessage, setNotificationMessage] = useState('');
   const [promoHistory, setPromoHistory] = useState<PromoHistory[]>([]);
+  const [isSendingNotification, setIsSendingNotification] = useState(false);
 
   const notificationTemplates = [
     {
@@ -114,27 +122,12 @@ const Admin: React.FC = () => {
       title: '🚚 Free Delivery Today!',
       message: 'No minimum order required for free delivery today. Order now and save on delivery charges!',
     },
-    {
-      id: 'loyalty-reward',
-      icon: '🎁',
-      label: 'Loyalty Reward',
-      title: '🎁 Special Reward for You!',
-      message: 'Thank you for being a valued customer! Enjoy an exclusive discount on your next order.',
-    },
-    {
-      id: 'low-stock',
-      icon: '🔥',
-      label: 'Low Stock Alert',
-      title: '🔥 Selling Fast - Limited Stock!',
-      message: 'Popular items are running low! Order now before they sell out. Don\'t miss out!',
-    },
   ];
 
   const applyTemplate = (template: typeof notificationTemplates[0]) => {
     setNotificationTitle(template.title);
     setNotificationMessage(template.message);
   };
-  const [isSendingNotification, setIsSendingNotification] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -146,57 +139,46 @@ const Admin: React.FC = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Fetch all orders
-      const { data: ordersData, error: ordersError } = await supabase
+      const { data: ordersData } = await supabase
         .from('orders')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (ordersError) throw ordersError;
       setOrders(ordersData || []);
 
-      // Fetch all subscriptions
-      const { data: subsData, error: subsError } = await supabase
+      const { data: subsData } = await supabase
         .from('subscriptions')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (subsError) throw subsError;
       setSubscriptions(subsData || []);
 
-      // Fetch contact messages
-      const { data: messagesData, error: messagesError } = await supabase
+      const { data: messagesData } = await supabase
         .from('contact_messages')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (messagesError) throw messagesError;
       setMessages(messagesData || []);
 
-      // Fetch users
-      const { data: usersData, error: usersError } = await supabase
+      const { data: usersData } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(100);
 
-      if (usersError) throw usersError;
       setUsers(usersData || []);
 
-      // Fetch promotional notification history
-      const { data: historyData, error: historyError } = await supabase
+      const { data: historyData } = await supabase
         .from('promotional_notification_history')
         .select('*')
         .order('sent_at', { ascending: false })
         .limit(50);
 
-      if (historyError) console.error('Error fetching promo history:', historyError);
       setPromoHistory((historyData as PromoHistory[]) || []);
 
-      // Calculate stats
       const totalOrders = ordersData?.length || 0;
       const pendingOrders = ordersData?.filter(o => o.status === 'pending').length || 0;
       const activeSubscriptions = subsData?.filter(s => s.status === 'active').length || 0;
@@ -266,7 +248,6 @@ const Admin: React.FC = () => {
 
     setIsSendingNotification(true);
     try {
-      // Get all user IDs from profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id');
@@ -280,7 +261,6 @@ const Admin: React.FC = () => {
 
       const recipientCount = profiles.length;
 
-      // Create notifications for all users
       const notifications = profiles.map((profile) => ({
         user_id: profile.user_id,
         title: notificationTitle.trim(),
@@ -296,10 +276,8 @@ const Admin: React.FC = () => {
 
       if (insertError) throw insertError;
 
-      // Send push notifications via edge function
       let pushResult = { pushSent: false, successCount: 0, failureCount: 0 };
       try {
-        const { data: session } = await supabase.auth.getSession();
         const response = await supabase.functions.invoke('send-push-notification', {
           body: {
             title: notificationTitle.trim(),
@@ -313,8 +291,7 @@ const Admin: React.FC = () => {
         console.error('Push notification error:', pushError);
       }
 
-      // Log to history
-      const { error: historyError } = await supabase
+      await supabase
         .from('promotional_notification_history')
         .insert({
           title: notificationTitle.trim(),
@@ -325,12 +302,10 @@ const Admin: React.FC = () => {
           push_failure_count: pushResult.failureCount,
         });
 
-      if (historyError) console.error('Error logging to history:', historyError);
-
-      toast.success(`Notification sent to ${recipientCount} users!${pushResult.pushSent ? ` (${pushResult.successCount} push delivered)` : ''}`);
+      toast.success(`Notification sent to ${recipientCount} users!`);
       setNotificationTitle('');
       setNotificationMessage('');
-      fetchData(); // Refresh history
+      fetchData();
     } catch (error) {
       console.error('Error sending notification:', error);
       toast.error('Failed to send notification');
@@ -367,12 +342,16 @@ const Admin: React.FC = () => {
   };
 
   const tabs: { id: TabType; label: string; icon: React.ElementType; count?: number }[] = [
-    { id: 'orders', label: 'Orders', icon: Package, count: stats.pendingOrders },
+    { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+    { id: 'products', label: 'Products', icon: Package },
+    { id: 'orders', label: 'Orders', icon: ShoppingBag, count: stats.pendingOrders },
     { id: 'subscriptions', label: 'Subs', icon: RefreshCw },
-    { id: 'messages', label: 'Messages', icon: MessageSquare, count: stats.pendingMessages },
     { id: 'users', label: 'Users', icon: Users },
+    { id: 'messages', label: 'Messages', icon: MessageSquare, count: stats.pendingMessages },
+    { id: 'documents', label: 'Docs', icon: FileText },
     { id: 'notifications', label: 'Promo', icon: Megaphone },
-    { id: 'history', label: 'History', icon: History, count: promoHistory.length },
+    { id: 'history', label: 'History', icon: History },
+    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   return (
@@ -388,7 +367,7 @@ const Admin: React.FC = () => {
           </button>
           <div className="flex-1">
             <h1 className="font-heading text-xl font-bold">Admin Dashboard</h1>
-            <p className="text-sm opacity-80">Manage your store</p>
+            <p className="text-sm opacity-80">Full Store Management</p>
           </div>
           <button 
             onClick={fetchData}
@@ -401,32 +380,14 @@ const Admin: React.FC = () => {
       </div>
 
       <main className="px-4 py-4 space-y-6">
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { label: 'Orders', value: stats.totalOrders, icon: Package, color: 'text-primary' },
-            { label: 'Pending', value: stats.pendingOrders, icon: Clock, color: 'text-amber-500' },
-            { label: 'Revenue', value: `₹${(stats.totalRevenue / 1000).toFixed(1)}k`, icon: TrendingUp, color: 'text-green-500' },
-            { label: 'Users', value: stats.totalUsers, icon: Users, color: 'text-blue-500' },
-            { label: 'Subs', value: stats.activeSubscriptions, icon: RefreshCw, color: 'text-purple-500' },
-            { label: 'Messages', value: stats.pendingMessages, icon: Mail, color: 'text-orange-500' },
-          ].map((stat) => (
-            <div key={stat.label} className="p-3 bg-card rounded-xl shadow-card border border-border">
-              <stat.icon className={cn("w-4 h-4 mb-1", stat.color)} />
-              <p className="font-bold text-lg text-foreground">{stat.value}</p>
-              <p className="text-[10px] text-muted-foreground">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Tabs */}
+        {/* Tabs - Scrollable */}
         <div className="flex gap-1 bg-muted p-1 rounded-xl overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex-1 py-2 px-3 rounded-lg font-medium text-xs transition-colors flex items-center justify-center gap-1 whitespace-nowrap",
+                "py-2 px-3 rounded-lg font-medium text-xs transition-colors flex items-center gap-1 whitespace-nowrap",
                 activeTab === tab.id
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground"
@@ -443,7 +404,13 @@ const Admin: React.FC = () => {
           ))}
         </div>
 
-        {/* Content */}
+        {/* Dashboard Tab */}
+        {activeTab === 'dashboard' && <AdminAnalytics />}
+
+        {/* Products Tab */}
+        {activeTab === 'products' && <ProductsManager />}
+
+        {/* Orders Tab */}
         {activeTab === 'orders' && (
           <div className="space-y-3">
             {orders.length === 0 ? (
@@ -520,6 +487,7 @@ const Admin: React.FC = () => {
           </div>
         )}
 
+        {/* Subscriptions Tab */}
         {activeTab === 'subscriptions' && (
           <div className="space-y-3">
             {subscriptions.length === 0 ? (
@@ -552,6 +520,40 @@ const Admin: React.FC = () => {
           </div>
         )}
 
+        {/* Users Tab */}
+        {activeTab === 'users' && (
+          <div className="space-y-3">
+            {users.length === 0 ? (
+              <div className="text-center py-12">
+                <Users className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground">No users yet</p>
+              </div>
+            ) : (
+              users.map((user) => (
+                <div key={user.id} className="bg-card rounded-xl p-4 shadow-card border border-border">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Users className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-foreground truncate">
+                        {user.full_name || 'No name'}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {user.phone || 'No phone'}
+                      </p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(user.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Messages Tab */}
         {activeTab === 'messages' && (
           <div className="space-y-3">
             {messages.length === 0 ? (
@@ -589,41 +591,12 @@ const Admin: React.FC = () => {
           </div>
         )}
 
-        {activeTab === 'users' && (
-          <div className="space-y-3">
-            {users.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-                <p className="text-muted-foreground">No users yet</p>
-              </div>
-            ) : (
-              users.map((user) => (
-                <div key={user.id} className="bg-card rounded-xl p-4 shadow-card border border-border">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Users className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-foreground truncate">
-                        {user.full_name || 'No name'}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {user.phone || 'No phone'}
-                      </p>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(user.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
+        {/* Documents Tab */}
+        {activeTab === 'documents' && <DocumentUpload />}
 
+        {/* Notifications Tab */}
         {activeTab === 'notifications' && (
           <div className="space-y-4">
-            {/* Quick Templates */}
             <div className="bg-card rounded-xl p-4 shadow-card border border-border">
               <h3 className="font-semibold text-foreground mb-3">Quick Templates</h3>
               <div className="grid grid-cols-2 gap-2">
@@ -653,9 +626,7 @@ const Admin: React.FC = () => {
 
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm font-medium text-foreground mb-1 block">
-                    Notification Title
-                  </label>
+                  <label className="text-sm font-medium text-foreground mb-1 block">Title</label>
                   <Input
                     placeholder="e.g., Flash Sale Today!"
                     value={notificationTitle}
@@ -663,11 +634,8 @@ const Admin: React.FC = () => {
                     maxLength={100}
                   />
                 </div>
-
                 <div>
-                  <label className="text-sm font-medium text-foreground mb-1 block">
-                    Message
-                  </label>
+                  <label className="text-sm font-medium text-foreground mb-1 block">Message</label>
                   <Textarea
                     placeholder="e.g., Get 50% off on all vegetables today only!"
                     value={notificationMessage}
@@ -676,7 +644,6 @@ const Admin: React.FC = () => {
                     maxLength={500}
                   />
                 </div>
-
                 <Button 
                   className="w-full"
                   onClick={sendPromotionalNotification}
@@ -696,30 +663,16 @@ const Admin: React.FC = () => {
                 </Button>
               </div>
             </div>
-
-            <div className="bg-muted/50 rounded-xl p-4 border border-border">
-              <div className="flex items-start gap-3">
-                <Bell className="w-5 h-5 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">How it works</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Promotional notifications are delivered instantly to all registered users via the in-app notification system. Push notifications are also sent to devices with FCM tokens registered.
-                  </p>
-                </div>
-              </div>
-            </div>
           </div>
         )}
 
+        {/* History Tab */}
         {activeTab === 'history' && (
           <div className="space-y-3">
             {promoHistory.length === 0 ? (
               <div className="text-center py-12">
                 <History className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
                 <p className="text-muted-foreground">No promotional notifications sent yet</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Send your first promo from the Promo tab
-                </p>
               </div>
             ) : (
               promoHistory.map((promo) => (
@@ -731,17 +684,11 @@ const Admin: React.FC = () => {
                         {new Date(promo.sent_at).toLocaleString()}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="bg-primary/10 text-primary text-xs font-medium px-2 py-1 rounded-full">
-                        {promo.recipient_count} users
-                      </span>
-                    </div>
+                    <span className="bg-primary/10 text-primary text-xs font-medium px-2 py-1 rounded-full">
+                      {promo.recipient_count} users
+                    </span>
                   </div>
-                  
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-                    {promo.message}
-                  </p>
-
+                  <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{promo.message}</p>
                   <div className="flex items-center gap-3 text-xs">
                     <span className="flex items-center gap-1 text-muted-foreground">
                       <Bell className="w-3 h-3" />
@@ -750,18 +697,7 @@ const Admin: React.FC = () => {
                     {promo.push_sent && (
                       <span className="flex items-center gap-1 text-green-600">
                         <Send className="w-3 h-3" />
-                        Push: {promo.push_success_count || 0} sent
-                      </span>
-                    )}
-                    {promo.push_sent && (promo.push_failure_count || 0) > 0 && (
-                      <span className="flex items-center gap-1 text-amber-600">
-                        <XCircle className="w-3 h-3" />
-                        {promo.push_failure_count} failed
-                      </span>
-                    )}
-                    {!promo.push_sent && (
-                      <span className="text-muted-foreground italic">
-                        No push (FCM not configured)
+                        Push: {promo.push_success_count || 0}
                       </span>
                     )}
                   </div>
@@ -770,6 +706,9 @@ const Admin: React.FC = () => {
             )}
           </div>
         )}
+
+        {/* Settings Tab */}
+        {activeTab === 'settings' && <AdminSettings />}
       </main>
     </div>
   );

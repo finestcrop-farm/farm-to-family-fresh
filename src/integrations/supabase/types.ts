@@ -47,6 +47,39 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_documents: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          id: string
+          name: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          name: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          name?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       contact_messages: {
         Row: {
           created_at: string
@@ -253,6 +286,87 @@ export type Database = {
           total_amount?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          dietary_tags: string[] | null
+          expiry_days: number | null
+          farm_source: string | null
+          freshness_badge: string | null
+          fssai_license: string | null
+          id: string
+          image_url: string | null
+          in_stock: boolean | null
+          is_subscribable: boolean | null
+          name: string
+          name_hindi: string | null
+          name_telugu: string | null
+          original_price: number | null
+          price: number
+          product_id: string
+          rating: number | null
+          review_count: number | null
+          storage_tips: string | null
+          subcategory: string
+          unit: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          dietary_tags?: string[] | null
+          expiry_days?: number | null
+          farm_source?: string | null
+          freshness_badge?: string | null
+          fssai_license?: string | null
+          id?: string
+          image_url?: string | null
+          in_stock?: boolean | null
+          is_subscribable?: boolean | null
+          name: string
+          name_hindi?: string | null
+          name_telugu?: string | null
+          original_price?: number | null
+          price: number
+          product_id: string
+          rating?: number | null
+          review_count?: number | null
+          storage_tips?: string | null
+          subcategory: string
+          unit: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          dietary_tags?: string[] | null
+          expiry_days?: number | null
+          farm_source?: string | null
+          freshness_badge?: string | null
+          fssai_license?: string | null
+          id?: string
+          image_url?: string | null
+          in_stock?: boolean | null
+          is_subscribable?: boolean | null
+          name?: string
+          name_hindi?: string | null
+          name_telugu?: string | null
+          original_price?: number | null
+          price?: number
+          product_id?: string
+          rating?: number | null
+          review_count?: number | null
+          storage_tips?: string | null
+          subcategory?: string
+          unit?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
