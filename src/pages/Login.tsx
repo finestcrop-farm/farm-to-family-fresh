@@ -12,7 +12,7 @@ type LoginStep = 'phone' | 'otp';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { user, signInWithPhone, verifyOTP } = useAuth();
+  const { user, signInWithPhone, verifyOTP, devAdminLogin, isDevAdmin } = useAuth();
   const [phone, setPhone] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<LoginStep>('phone');
@@ -20,10 +20,10 @@ const Login: React.FC = () => {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (user) {
+    if (user || isDevAdmin) {
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [user, isDevAdmin, navigate]);
 
   const startResendTimer = () => {
     setResendTimer(30);
@@ -43,6 +43,12 @@ const Login: React.FC = () => {
     
     if (phone.length !== 10) {
       toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    // Try dev admin login first (bypasses OTP)
+    if (devAdminLogin(phone)) {
+      navigate('/');
       return;
     }
     

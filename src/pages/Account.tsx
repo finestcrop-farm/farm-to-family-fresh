@@ -12,7 +12,8 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const Account: React.FC = () => {
   const navigate = useNavigate();
-  const { user, profile, isAdmin, signOut, isLoading } = useAuth();
+  const { user, profile, isAdmin, signOut, isLoading, isDevAdmin } = useAuth();
+  const showAdmin = isAdmin || isDevAdmin;
 
   const menuItems = [
     {
@@ -70,7 +71,7 @@ const Account: React.FC = () => {
                     <h1 className="font-heading text-xl font-bold">
                       {profile?.full_name || 'Welcome!'}
                     </h1>
-                    {isAdmin && (
+                    {showAdmin && (
                       <span className="px-2 py-0.5 bg-amber-500/20 text-amber-200 text-xs font-semibold rounded-full flex items-center gap-1">
                         <Crown className="w-3 h-3" />
                         Admin
@@ -103,7 +104,7 @@ const Account: React.FC = () => {
 
       <main className="px-4 py-4 space-y-6">
         {/* Admin Panel Link */}
-        {isAdmin && (
+        {showAdmin && (
           <button
             onClick={() => navigate('/admin')}
             className="w-full p-4 bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl shadow-lg flex items-center gap-4 text-white"

@@ -16,7 +16,7 @@ type AuthStep = 'choose' | 'form' | 'otp';
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
-  const { user, signInWithPhone, verifyOTP, signUp } = useAuth();
+  const { user, signInWithPhone, verifyOTP, signUp, devAdminLogin, isDevAdmin } = useAuth();
   const { completeOnboarding } = useApp();
   
   const [mode, setMode] = useState<AuthMode>('login');
@@ -35,10 +35,10 @@ const Auth: React.FC = () => {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (user) {
+    if (user || isDevAdmin) {
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [user, isDevAdmin, navigate]);
 
   const startResendTimer = () => {
     setResendTimer(30);
@@ -82,6 +82,13 @@ const Auth: React.FC = () => {
     
     if (phone.length !== 10) {
       toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    // Try dev admin login first (bypasses OTP)
+    if (devAdminLogin(phone)) {
+      completeOnboarding();
+      navigate('/');
       return;
     }
     
