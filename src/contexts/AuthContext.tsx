@@ -10,17 +10,22 @@ interface Profile {
   phone: string | null;
 }
 
+// Dev admin phone for testing (bypasses OTP)
+const DEV_ADMIN_PHONE = '9989835113';
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
   isAdmin: boolean;
   isLoading: boolean;
+  isDevAdmin: boolean;
   signInWithPhone: (phone: string) => Promise<{ error: Error | null }>;
   verifyOTP: (phone: string, token: string) => Promise<{ error: Error | null }>;
   signUp: (phone: string, fullName: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  devAdminLogin: (phone: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,7 +47,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isDevAdmin, setIsDevAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Check for dev admin in localStorage on mount
+  useEffect(() => {
+    const devAdmin = localStorage.getItem('devAdminPhone');
+    if (devAdmin === DEV_ADMIN_PHONE) {
+      setIsDevAdmin(true);
+      setIsAdmin(true);
+      setProfile({
+        id: 'dev-admin',
+        user_id: 'dev-admin',
+        full_name: 'Dev Admin',
+        phone: DEV_ADMIN_PHONE,
+      });
+      setIsLoading(false);
+    }
+  }, []);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -174,6 +196,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const signOut = async () => {
     try {
+      // Clear dev admin if set
+      localStorage.removeItem('devAdminPhone');
+      setIsDevAdmin(false);
+      
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
@@ -192,6 +218,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Dev admin login bypass (for testing when OTP is not working)
+  const devAdminLogin = (phone: string): boolean => {
+    const cleanPhone = phone.replace(/\D/g, '').replace(/^91/, '');
+    if (cleanPhone === DEV_ADMIN_PHONE) {
+      localStorage.setItem('devAdminPhone', DEV_ADMIN_PHONE);
+      setIsDevAdmin(true);
+      setIsAdmin(true);
+      setProfile({
+        id: 'dev-admin',
+        user_id: 'dev-admin',
+        full_name: 'Dev Admin',
+        phone: DEV_ADMIN_PHONE,
+      });
+      toast.success('Dev Admin access granted!');
+      return true;
+    }
+    return false;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -200,11 +245,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         profile,
         isAdmin,
         isLoading,
+        isDevAdmin,
         signInWithPhone,
         verifyOTP,
         signUp,
         signOut,
         refreshProfile,
+        devAdminLogin,
       }}
     >
       {children}
