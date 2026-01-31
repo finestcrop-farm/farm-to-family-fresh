@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit2, Trash2, Package, Loader2, Filter, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Package, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
+import { useAdminProxy } from '@/hooks/useAdminProxy';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import ProductForm from './ProductForm';
@@ -50,10 +51,13 @@ const ProductsManager: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [stockFilter, setStockFilter] = useState<'all' | 'in-stock' | 'out-of-stock'>('all');
+  
+  const { adminRequest, isDevAdmin } = useAdminProxy();
 
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
+      // Products are publicly readable, so we can use regular supabase client for fetching
       let query = supabase
         .from('products')
         .select('*')
@@ -94,10 +98,11 @@ const ProductsManager: React.FC = () => {
     if (!confirm(`Are you sure you want to delete "${product.name}"?`)) return;
 
     try {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', product.id);
+      const { error } = await adminRequest({
+        action: 'delete',
+        table: 'products',
+        id: product.id,
+      });
 
       if (error) throw error;
       toast.success('Product deleted');
@@ -110,10 +115,12 @@ const ProductsManager: React.FC = () => {
 
   const toggleStock = async (product: Product) => {
     try {
-      const { error } = await supabase
-        .from('products')
-        .update({ in_stock: !product.in_stock })
-        .eq('id', product.id);
+      const { error } = await adminRequest({
+        action: 'update',
+        table: 'products',
+        id: product.id,
+        data: { in_stock: !product.in_stock },
+      });
 
       if (error) throw error;
       toast.success(`Product marked as ${!product.in_stock ? 'in stock' : 'out of stock'}`);
@@ -182,7 +189,7 @@ const ProductsManager: React.FC = () => {
         ].map((filter) => (
           <button
             key={filter.id}
-            onClick={() => setStockFilter(filter.id as any)}
+            onClick={() => setStockFilter(filter.id as 'all' | 'in-stock' | 'out-of-stock')}
             className={cn(
               "px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
               stockFilter === filter.id
@@ -231,7 +238,7 @@ const ProductsManager: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <p className="font-medium truncate">{product.name}</p>
                   {product.freshness_badge && (
-                    <span className="px-1.5 py-0.5 text-[10px] bg-green-100 text-green-700 rounded">
+                    <span className="px-1.5 py-0.5 text-[10px] bg-accent text-accent-foreground rounded">
                       {product.freshness_badge}
                     </span>
                   )}
@@ -255,8 +262,8 @@ const ProductsManager: React.FC = () => {
                   className={cn(
                     "px-2 py-1 rounded text-xs font-medium",
                     product.in_stock
-                      ? "bg-green-100 text-green-700"
-                      : "bg-red-100 text-red-700"
+                      ? "bg-accent text-accent-foreground"
+                      : "bg-destructive/10 text-destructive"
                   )}
                 >
                   {product.in_stock ? 'In Stock' : 'Out'}
@@ -311,6 +318,7 @@ const ProductsManager: React.FC = () => {
           } : undefined}
           onClose={handleFormClose}
           onSave={handleFormSave}
+          useAdminProxy={isDevAdmin}
         />
       )}
     </div>
