@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
+import { useAdminProxy } from '@/hooks/useAdminProxy';
 import { toast } from 'sonner';
 
 interface ProductFormData {
@@ -34,6 +35,7 @@ interface ProductFormProps {
   product?: ProductFormData;
   onClose: () => void;
   onSave: () => void;
+  useAdminProxy?: boolean;
 }
 
 const categories = [
@@ -55,7 +57,9 @@ const freshnessBadges = [
   { id: 'local', name: 'Local' },
 ];
 
-const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSave }) => {
+const DEV_ADMIN_PHONE = '9989835113';
+
+const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSave, useAdminProxy: useProxy = false }) => {
   const [formData, setFormData] = useState<ProductFormData>(
     product || {
       product_id: '',
@@ -81,6 +85,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSave }) =
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { adminRequest } = useAdminProxy();
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -91,6 +96,47 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSave }) =
       const fileExt = file.name.split('.').pop();
       const fileName = `${formData.product_id || Date.now()}.${fileExt}`;
       const filePath = `products/${fileName}`;
+
+      // For dev admin, we need to upload via edge function
+      if (useProxy) {
+        // Convert file to base64 for upload via edge function
+        const reader = new FileReader();
+        reader.onload = async () => {
+          try {
+            const base64 = (reader.result as string).split(',')[1];
+            const response = await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-storage-upload`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-dev-admin-key': DEV_ADMIN_PHONE,
+                  'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                },
+                body: JSON.stringify({
+                  bucket: 'product-images',
+                  path: filePath,
+                  file: base64,
+                  contentType: file.type,
+                }),
+              }
+            );
+            
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            
+            setFormData({ ...formData, image_url: result.publicUrl });
+            toast.success('Image uploaded successfully');
+          } catch (error) {
+            console.error('Upload error:', error);
+            toast.error('Failed to upload image');
+          } finally {
+            setIsUploading(false);
+          }
+        };
+        reader.readAsDataURL(file);
+        return;
+      }
 
       const { error: uploadError } = await supabase.storage
         .from('product-images')
@@ -143,25 +189,49 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSave }) =
         is_subscribable: formData.is_subscribable,
       };
 
-      if (product?.id) {
-        const { error } = await supabase
-          .from('products')
-          .update(dataToSave)
-          .eq('id', product.id);
-        if (error) throw error;
-        toast.success('Product updated successfully');
+      if (useProxy) {
+        // Use admin proxy for dev admin
+        if (product?.id) {
+          const { error } = await adminRequest({
+            action: 'update',
+            table: 'products',
+            id: product.id,
+            data: dataToSave,
+          });
+          if (error) throw error;
+          toast.success('Product updated successfully');
+        } else {
+          const { error } = await adminRequest({
+            action: 'insert',
+            table: 'products',
+            data: dataToSave,
+          });
+          if (error) throw error;
+          toast.success('Product added successfully');
+        }
       } else {
-        const { error } = await supabase
-          .from('products')
-          .insert(dataToSave);
-        if (error) throw error;
-        toast.success('Product added successfully');
+        // Use regular supabase for authenticated admin
+        if (product?.id) {
+          const { error } = await supabase
+            .from('products')
+            .update(dataToSave)
+            .eq('id', product.id);
+          if (error) throw error;
+          toast.success('Product updated successfully');
+        } else {
+          const { error } = await supabase
+            .from('products')
+            .insert(dataToSave);
+          if (error) throw error;
+          toast.success('Product added successfully');
+        }
       }
 
       onSave();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Save error:', error);
-      toast.error(error.message || 'Failed to save product');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save product';
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
