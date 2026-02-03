@@ -47,6 +47,45 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_audit_logs: {
+        Row: {
+          action: string
+          admin_identifier: string
+          created_at: string
+          details: Json | null
+          duration_ms: number | null
+          id: string
+          ip_address: string | null
+          record_id: string | null
+          request_id: string | null
+          table_name: string
+        }
+        Insert: {
+          action: string
+          admin_identifier: string
+          created_at?: string
+          details?: Json | null
+          duration_ms?: number | null
+          id?: string
+          ip_address?: string | null
+          record_id?: string | null
+          request_id?: string | null
+          table_name: string
+        }
+        Update: {
+          action?: string
+          admin_identifier?: string
+          created_at?: string
+          details?: Json | null
+          duration_ms?: number | null
+          id?: string
+          ip_address?: string | null
+          record_id?: string | null
+          request_id?: string | null
+          table_name?: string
+        }
+        Relationships: []
+      }
       admin_documents: {
         Row: {
           category: string | null

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, Package, Users, ShoppingBag,
   RefreshCw, CheckCircle, XCircle, Truck,
-  MessageSquare, Megaphone, History, 
+  MessageSquare, Megaphone, History, ClipboardList,
   Settings, FileText, BarChart3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import AdminAnalytics from '@/components/admin/AdminAnalytics';
 import AdminSettings from '@/components/admin/AdminSettings';
 import PromoNotifications from '@/components/admin/PromoNotifications';
 import PromoHistoryList from '@/components/admin/PromoHistoryList';
+import AuditLogList from '@/components/admin/AuditLogList';
 
 interface Order {
   id: string;
@@ -58,7 +59,7 @@ interface Profile {
   created_at: string;
 }
 
-type TabType = 'dashboard' | 'products' | 'orders' | 'subscriptions' | 'messages' | 'users' | 'documents' | 'notifications' | 'history' | 'settings';
+type TabType = 'dashboard' | 'products' | 'orders' | 'subscriptions' | 'messages' | 'users' | 'documents' | 'notifications' | 'history' | 'audit' | 'settings';
 
 const Admin: React.FC = () => {
   const navigate = useNavigate();
@@ -217,7 +218,8 @@ const Admin: React.FC = () => {
     { id: 'messages', label: 'Messages', icon: MessageSquare, count: stats.pendingMessages },
     { id: 'documents', label: 'Docs', icon: FileText },
     { id: 'notifications', label: 'Promo', icon: Megaphone },
-    { id: 'history', label: 'History', icon: History },
+    { id: 'history', label: 'Promo Log', icon: History },
+    { id: 'audit', label: 'Audit', icon: ClipboardList },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
@@ -466,8 +468,11 @@ const Admin: React.FC = () => {
           <PromoNotifications totalUsers={stats.totalUsers} onRefresh={fetchData} />
         )}
 
-        {/* History Tab */}
+        {/* Promo History Tab */}
         {activeTab === 'history' && <PromoHistoryList />}
+
+        {/* Audit Log Tab */}
+        {activeTab === 'audit' && <AuditLogList />}
 
         {/* Settings Tab */}
         {activeTab === 'settings' && <AdminSettings />}

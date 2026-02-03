@@ -17,7 +17,49 @@ const MAX_REQUESTS_PER_WINDOW = 100;
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 // Allowed tables for security
-const ALLOWED_TABLES = ['products', 'orders', 'subscriptions', 'profiles', 'admin_documents', 'notifications', 'promotional_notification_history'];
+const ALLOWED_TABLES = ['products', 'orders', 'subscriptions', 'profiles', 'admin_documents', 'notifications', 'promotional_notification_history', 'admin_audit_logs'];
+
+// Audit log helper - uses fetch directly to avoid type issues with new tables
+const createAuditLog = async (
+  data: {
+    action: string;
+    table: string;
+    recordId?: string;
+    adminIdentifier: string;
+    details?: Record<string, unknown>;
+    ipAddress: string;
+    requestId: string;
+    durationMs: number;
+  }
+) => {
+  try {
+    // Direct insert using fetch to bypass type checking for new tables
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    
+    await fetch(`${supabaseUrl}/rest/v1/admin_audit_logs`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': serviceRoleKey,
+        'Authorization': `Bearer ${serviceRoleKey}`,
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({
+        action: data.action,
+        table_name: data.table,
+        record_id: data.recordId,
+        admin_identifier: data.adminIdentifier,
+        details: data.details,
+        ip_address: data.ipAddress,
+        request_id: data.requestId,
+        duration_ms: data.durationMs,
+      }),
+    });
+  } catch (error) {
+    log('ERROR', 'Failed to create audit log', { error: String(error), requestId: data.requestId });
+  }
+};
 
 // Logging helper
 const log = (level: 'INFO' | 'WARN' | 'ERROR', message: string, data?: Record<string, unknown>) => {
@@ -167,6 +209,21 @@ serve(async (req) => {
     }
 
     const duration = Date.now() - startTime;
+    
+    // Create audit log entry for non-select actions (avoid logging reads to reduce noise)
+    if (action !== 'select' && table !== 'admin_audit_logs') {
+      await createAuditLog({
+        action,
+        table,
+        recordId: id || (result.data?.[0]?.id as string),
+        adminIdentifier: DEV_ADMIN_PHONE,
+        details: action === 'delete' ? undefined : { data_preview: JSON.stringify(data).slice(0, 500) },
+        ipAddress: clientIp,
+        requestId,
+        durationMs: duration,
+      });
+    }
+    
     log('INFO', 'Admin proxy request completed', { 
       requestId, 
       action, 
