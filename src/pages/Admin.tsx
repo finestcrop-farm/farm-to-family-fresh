@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  ArrowLeft, Package, Users, ShoppingBag, TrendingUp,
-  RefreshCw, CheckCircle, XCircle, Truck, Clock, Mail,
-  MessageSquare, Bell, Send, Megaphone, History, 
-  Settings, FileText, BarChart3, Plus
+  ArrowLeft, Package, Users, ShoppingBag,
+  RefreshCw, CheckCircle, XCircle, Truck,
+  MessageSquare, Megaphone, History, 
+  Settings, FileText, BarChart3
 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,6 +17,8 @@ import ProductsManager from '@/components/admin/ProductsManager';
 import DocumentUpload from '@/components/admin/DocumentUpload';
 import AdminAnalytics from '@/components/admin/AdminAnalytics';
 import AdminSettings from '@/components/admin/AdminSettings';
+import PromoNotifications from '@/components/admin/PromoNotifications';
+import PromoHistoryList from '@/components/admin/PromoHistoryList';
 
 interface Order {
   id: string;
@@ -58,17 +58,6 @@ interface Profile {
   created_at: string;
 }
 
-interface PromoHistory {
-  id: string;
-  title: string;
-  message: string;
-  recipient_count: number;
-  sent_at: string;
-  push_sent: boolean;
-  push_success_count: number | null;
-  push_failure_count: number | null;
-}
-
 type TabType = 'dashboard' | 'products' | 'orders' | 'subscriptions' | 'messages' | 'users' | 'documents' | 'notifications' | 'history' | 'settings';
 
 const Admin: React.FC = () => {
@@ -88,46 +77,6 @@ const Admin: React.FC = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
-  const [notificationTitle, setNotificationTitle] = useState('');
-  const [notificationMessage, setNotificationMessage] = useState('');
-  const [promoHistory, setPromoHistory] = useState<PromoHistory[]>([]);
-  const [isSendingNotification, setIsSendingNotification] = useState(false);
-
-  const notificationTemplates = [
-    {
-      id: 'flash-sale',
-      icon: '⚡',
-      label: 'Flash Sale',
-      title: '⚡ Flash Sale Alert!',
-      message: 'Limited time offer! Get up to 50% off on selected items. Shop now before stocks run out!',
-    },
-    {
-      id: 'new-arrivals',
-      icon: '✨',
-      label: 'New Arrivals',
-      title: '✨ Fresh Arrivals Just Landed!',
-      message: 'Check out our latest collection of fresh produce and grocery essentials. Order now for same-day delivery!',
-    },
-    {
-      id: 'weekend-deal',
-      icon: '🎉',
-      label: 'Weekend Deal',
-      title: '🎉 Weekend Special Deals!',
-      message: 'Enjoy exclusive weekend discounts on your favorite products. Valid Saturday & Sunday only!',
-    },
-    {
-      id: 'free-delivery',
-      icon: '🚚',
-      label: 'Free Delivery',
-      title: '🚚 Free Delivery Today!',
-      message: 'No minimum order required for free delivery today. Order now and save on delivery charges!',
-    },
-  ];
-
-  const applyTemplate = (template: typeof notificationTemplates[0]) => {
-    setNotificationTitle(template.title);
-    setNotificationMessage(template.message);
-  };
 
   useEffect(() => {
     if (!authLoading && !isAdmin && !isDevAdmin) {
@@ -170,14 +119,6 @@ const Admin: React.FC = () => {
         .limit(100);
 
       setUsers(usersData || []);
-
-      const { data: historyData } = await supabase
-        .from('promotional_notification_history')
-        .select('*')
-        .order('sent_at', { ascending: false })
-        .limit(50);
-
-      setPromoHistory((historyData as PromoHistory[]) || []);
 
       const totalOrders = ordersData?.length || 0;
       const pendingOrders = ordersData?.filter(o => o.status === 'pending').length || 0;
@@ -237,80 +178,6 @@ const Admin: React.FC = () => {
     } catch (error) {
       console.error('Error updating message:', error);
       toast.error('Failed to update message');
-    }
-  };
-
-  const sendPromotionalNotification = async () => {
-    if (!notificationTitle.trim() || !notificationMessage.trim()) {
-      toast.error('Please fill in both title and message');
-      return;
-    }
-
-    setIsSendingNotification(true);
-    try {
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('user_id');
-
-      if (profilesError) throw profilesError;
-
-      if (!profiles || profiles.length === 0) {
-        toast.error('No users found to send notifications');
-        return;
-      }
-
-      const recipientCount = profiles.length;
-
-      const notifications = profiles.map((profile) => ({
-        user_id: profile.user_id,
-        title: notificationTitle.trim(),
-        message: notificationMessage.trim(),
-        type: 'offer',
-        read: false,
-        data: { sent_by: 'admin', sent_at: new Date().toISOString() },
-      }));
-
-      const { error: insertError } = await supabase
-        .from('notifications')
-        .insert(notifications);
-
-      if (insertError) throw insertError;
-
-      let pushResult = { pushSent: false, successCount: 0, failureCount: 0 };
-      try {
-        const response = await supabase.functions.invoke('send-push-notification', {
-          body: {
-            title: notificationTitle.trim(),
-            message: notificationMessage.trim(),
-          },
-        });
-        if (response.data) {
-          pushResult = response.data;
-        }
-      } catch (pushError) {
-        console.error('Push notification error:', pushError);
-      }
-
-      await supabase
-        .from('promotional_notification_history')
-        .insert({
-          title: notificationTitle.trim(),
-          message: notificationMessage.trim(),
-          recipient_count: recipientCount,
-          push_sent: pushResult.pushSent,
-          push_success_count: pushResult.successCount,
-          push_failure_count: pushResult.failureCount,
-        });
-
-      toast.success(`Notification sent to ${recipientCount} users!`);
-      setNotificationTitle('');
-      setNotificationMessage('');
-      fetchData();
-    } catch (error) {
-      console.error('Error sending notification:', error);
-      toast.error('Failed to send notification');
-    } finally {
-      setIsSendingNotification(false);
     }
   };
 
@@ -596,116 +463,11 @@ const Admin: React.FC = () => {
 
         {/* Notifications Tab */}
         {activeTab === 'notifications' && (
-          <div className="space-y-4">
-            <div className="bg-card rounded-xl p-4 shadow-card border border-border">
-              <h3 className="font-semibold text-foreground mb-3">Quick Templates</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {notificationTemplates.map((template) => (
-                  <button
-                    key={template.id}
-                    onClick={() => applyTemplate(template)}
-                    className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left border border-transparent hover:border-primary/20"
-                  >
-                    <span className="text-xl">{template.icon}</span>
-                    <span className="text-sm font-medium text-foreground">{template.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-card rounded-xl p-4 shadow-card border border-border">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Megaphone className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Send Promotional Alert</h3>
-                  <p className="text-xs text-muted-foreground">Notify all users instantly</p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-1 block">Title</label>
-                  <Input
-                    placeholder="e.g., Flash Sale Today!"
-                    value={notificationTitle}
-                    onChange={(e) => setNotificationTitle(e.target.value)}
-                    maxLength={100}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-foreground mb-1 block">Message</label>
-                  <Textarea
-                    placeholder="e.g., Get 50% off on all vegetables today only!"
-                    value={notificationMessage}
-                    onChange={(e) => setNotificationMessage(e.target.value)}
-                    rows={3}
-                    maxLength={500}
-                  />
-                </div>
-                <Button 
-                  className="w-full"
-                  onClick={sendPromotionalNotification}
-                  disabled={isSendingNotification || !notificationTitle.trim() || !notificationMessage.trim()}
-                >
-                  {isSendingNotification ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4 mr-2" />
-                      Send to All Users ({stats.totalUsers})
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
+          <PromoNotifications totalUsers={stats.totalUsers} onRefresh={fetchData} />
         )}
 
         {/* History Tab */}
-        {activeTab === 'history' && (
-          <div className="space-y-3">
-            {promoHistory.length === 0 ? (
-              <div className="text-center py-12">
-                <History className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-                <p className="text-muted-foreground">No promotional notifications sent yet</p>
-              </div>
-            ) : (
-              promoHistory.map((promo) => (
-                <div key={promo.id} className="bg-card rounded-xl p-4 shadow-card border border-border">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1 min-w-0 mr-3">
-                      <p className="font-semibold text-foreground truncate">{promo.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(promo.sent_at).toLocaleString()}
-                      </p>
-                    </div>
-                    <span className="bg-primary/10 text-primary text-xs font-medium px-2 py-1 rounded-full">
-                      {promo.recipient_count} users
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{promo.message}</p>
-                  <div className="flex items-center gap-3 text-xs">
-                    <span className="flex items-center gap-1 text-muted-foreground">
-                      <Bell className="w-3 h-3" />
-                      In-app: {promo.recipient_count}
-                    </span>
-                    {promo.push_sent && (
-                      <span className="flex items-center gap-1 text-green-600">
-                        <Send className="w-3 h-3" />
-                        Push: {promo.push_success_count || 0}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
+        {activeTab === 'history' && <PromoHistoryList />}
 
         {/* Settings Tab */}
         {activeTab === 'settings' && <AdminSettings />}
