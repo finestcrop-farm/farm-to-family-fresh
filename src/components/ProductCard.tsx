@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Minus, Star } from 'lucide-react';
-import { Product } from '@/types';
+import { Plus, Minus, Star, ChevronDown } from 'lucide-react';
+import { Product, QuantityVariant } from '@/types';
 import { useApp } from '@/contexts/AppContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,22 +15,38 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'default' }) => {
   const navigate = useNavigate();
   const { cart, addToCart, updateCartQuantity } = useApp();
+  
+  // Track selected variant
+  const defaultVariant = product.quantityVariants?.[0] || { unit: product.unit, price: product.price, originalPrice: product.originalPrice };
+  const [selectedVariant, setSelectedVariant] = useState<QuantityVariant>(defaultVariant);
+  const [showVariants, setShowVariants] = useState(false);
 
-  const cartItem = cart.find(item => item.product.id === product.id);
+  const cartItem = cart.find(item => 
+    item.product.id === product.id && 
+    (item.selectedVariant?.unit || item.product.unit) === selectedVariant.unit
+  );
   const quantity = cartItem?.quantity || 0;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
-    addToCart(product);
+    addToCart(product, selectedVariant);
   };
 
   const handleUpdateQuantity = (e: React.MouseEvent, newQuantity: number) => {
     e.stopPropagation();
-    updateCartQuantity(product.id, newQuantity);
+    updateCartQuantity(product.id, newQuantity, selectedVariant);
   };
 
-  const discount = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+  const handleVariantSelect = (e: React.MouseEvent, variant: QuantityVariant) => {
+    e.stopPropagation();
+    setSelectedVariant(variant);
+    setShowVariants(false);
+  };
+
+  const currentPrice = selectedVariant.price;
+  const currentOriginalPrice = selectedVariant.originalPrice;
+  const discount = currentOriginalPrice
+    ? Math.round(((currentOriginalPrice - currentPrice) / currentOriginalPrice) * 100)
     : 0;
 
   const freshnessBadgeConfig = {
@@ -39,6 +55,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'default' 
     'handpicked': { label: 'Handpicked', variant: 'soft' as const },
     'local': { label: 'Local', variant: 'soft' as const },
   };
+
+  const hasVariants = product.quantityVariants && product.quantityVariants.length > 1;
 
   if (variant === 'horizontal') {
     return (
@@ -66,14 +84,45 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'default' 
           <h3 className="font-semibold text-sm text-foreground line-clamp-2 mb-1">
             {product.name}
           </h3>
-          <p className="text-xs text-muted-foreground mb-2">{product.unit}</p>
+          
+          {/* Quantity Selector */}
+          {hasVariants ? (
+            <div className="relative mb-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowVariants(!showVariants); }}
+                className="flex items-center gap-1 text-xs bg-secondary px-2 py-1 rounded-md"
+              >
+                <span className="font-medium">{selectedVariant.unit}</span>
+                <ChevronDown className={cn("w-3 h-3 transition-transform", showVariants && "rotate-180")} />
+              </button>
+              {showVariants && (
+                <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-10 min-w-[120px]">
+                  {product.quantityVariants?.map((v) => (
+                    <button
+                      key={v.unit}
+                      onClick={(e) => handleVariantSelect(e, v)}
+                      className={cn(
+                        "w-full px-3 py-2 text-left text-xs hover:bg-secondary transition-colors flex justify-between",
+                        v.unit === selectedVariant.unit && "bg-primary/10 text-primary"
+                      )}
+                    >
+                      <span>{v.unit}</span>
+                      <span className="font-semibold">₹{v.price}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground mb-2">{product.unit}</p>
+          )}
           
           <div className="flex items-center gap-2 mb-2">
-            <span className="font-bold text-primary">₹{product.price}</span>
-            {product.originalPrice && (
+            <span className="font-bold text-primary">₹{currentPrice}</span>
+            {currentOriginalPrice && (
               <>
                 <span className="text-xs text-muted-foreground line-through">
-                  ₹{product.originalPrice}
+                  ₹{currentOriginalPrice}
                 </span>
                 <Badge variant="offer" className="text-[10px]">
                   {discount}% OFF
@@ -155,7 +204,31 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'default' 
         )}>
           {product.name}
         </h3>
-        <p className="text-xs text-muted-foreground mb-2">{product.unit}</p>
+
+        {/* Quantity Selector Chips */}
+        {hasVariants ? (
+          <div className="flex flex-wrap gap-1 mb-2">
+            {product.quantityVariants?.slice(0, 3).map((v) => (
+              <button
+                key={v.unit}
+                onClick={(e) => handleVariantSelect(e, v)}
+                className={cn(
+                  "px-1.5 py-0.5 rounded text-[9px] font-medium transition-all border",
+                  v.unit === selectedVariant.unit
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-secondary text-muted-foreground border-transparent hover:border-primary/30"
+                )}
+              >
+                {v.unit}
+              </button>
+            ))}
+            {product.quantityVariants && product.quantityVariants.length > 3 && (
+              <span className="text-[9px] text-muted-foreground px-1">+{product.quantityVariants.length - 3}</span>
+            )}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground mb-2">{product.unit}</p>
+        )}
 
         {product.rating && (
           <div className="flex items-center gap-1 mb-2">
@@ -169,10 +242,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, variant = 'default' 
 
         <div className="mt-auto">
           <div className="flex items-center gap-2 mb-2">
-            <span className="font-bold text-primary">₹{product.price}</span>
-            {product.originalPrice && (
+            <span className="font-bold text-primary">₹{currentPrice}</span>
+            {currentOriginalPrice && (
               <span className="text-xs text-muted-foreground line-through">
-                ₹{product.originalPrice}
+                ₹{currentOriginalPrice}
               </span>
             )}
           </div>

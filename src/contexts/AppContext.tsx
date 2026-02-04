@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { CartItem, Language, UserPreferences, Product } from '@/types';
+import { CartItem, Language, UserPreferences, Product, QuantityVariant } from '@/types';
 
 interface AppContextType {
   // User preferences
@@ -10,9 +10,9 @@ interface AppContextType {
   
   // Cart
   cart: CartItem[];
-  addToCart: (product: Product, quantity?: number) => void;
-  removeFromCart: (productId: string) => void;
-  updateCartQuantity: (productId: string, quantity: number) => void;
+  addToCart: (product: Product, variant?: QuantityVariant) => void;
+  removeFromCart: (productId: string, variant?: QuantityVariant) => void;
+  updateCartQuantity: (productId: string, quantity: number, variant?: QuantityVariant) => void;
   clearCart: () => void;
   cartTotal: number;
   cartItemCount: number;
@@ -85,33 +85,51 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     localStorage.setItem('ourpurenaturals_prefs', JSON.stringify(prefs));
   };
 
-  const addToCart = (product: Product, quantity = 1) => {
+  // Helper to get cart item key
+  const getCartItemKey = (productId: string, variant?: QuantityVariant) => {
+    return variant ? `${productId}:${variant.unit}` : productId;
+  };
+
+  const addToCart = (product: Product, variant?: QuantityVariant) => {
     setCart(prev => {
-      const existingItem = prev.find(item => item.product.id === product.id);
+      const existingItem = prev.find(item => {
+        const itemKey = getCartItemKey(item.product.id, item.selectedVariant);
+        const newKey = getCartItemKey(product.id, variant);
+        return itemKey === newKey;
+      });
+      
       if (existingItem) {
-        return prev.map(item =>
-          item.product.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
+        return prev.map(item => {
+          const itemKey = getCartItemKey(item.product.id, item.selectedVariant);
+          const newKey = getCartItemKey(product.id, variant);
+          return itemKey === newKey
+            ? { ...item, quantity: item.quantity + 1 }
+            : item;
+        });
       }
-      return [...prev, { product, quantity }];
+      return [...prev, { product, quantity: 1, selectedVariant: variant }];
     });
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart(prev => prev.filter(item => item.product.id !== productId));
+  const removeFromCart = (productId: string, variant?: QuantityVariant) => {
+    setCart(prev => prev.filter(item => {
+      const itemKey = getCartItemKey(item.product.id, item.selectedVariant);
+      const removeKey = getCartItemKey(productId, variant);
+      return itemKey !== removeKey;
+    }));
   };
 
-  const updateCartQuantity = (productId: string, quantity: number) => {
+  const updateCartQuantity = (productId: string, quantity: number, variant?: QuantityVariant) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(productId, variant);
       return;
     }
     setCart(prev =>
-      prev.map(item =>
-        item.product.id === productId ? { ...item, quantity } : item
-      )
+      prev.map(item => {
+        const itemKey = getCartItemKey(item.product.id, item.selectedVariant);
+        const updateKey = getCartItemKey(productId, variant);
+        return itemKey === updateKey ? { ...item, quantity } : item;
+      })
     );
   };
 
@@ -120,7 +138,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   const cartTotal = cart.reduce(
-    (total, item) => total + item.product.price * item.quantity,
+    (total, item) => {
+      const price = item.selectedVariant?.price || item.product.price;
+      return total + price * item.quantity;
+    },
     0
   );
 
