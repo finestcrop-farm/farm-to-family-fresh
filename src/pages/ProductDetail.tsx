@@ -6,7 +6,9 @@ import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import ProductCard from '@/components/ProductCard';
+import QuantitySelector from '@/components/QuantitySelector';
 import { cn } from '@/lib/utils';
+import { QuantityVariant } from '@/types';
 
 const ProductDetail: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
@@ -16,6 +18,11 @@ const ProductDetail: React.FC = () => {
 
   const product = getProductById(productId || '');
   const relatedProducts = getFeaturedProducts().filter(p => p.id !== productId).slice(0, 4);
+
+  // Selected variant state
+  const defaultVariant: QuantityVariant = product?.quantityVariants?.[0] || 
+    { unit: product?.unit || '', price: product?.price || 0, originalPrice: product?.originalPrice };
+  const [selectedVariant, setSelectedVariant] = useState<QuantityVariant>(defaultVariant);
 
   if (!product) {
     return (
@@ -33,11 +40,16 @@ const ProductDetail: React.FC = () => {
     );
   }
 
-  const cartItem = cart.find(item => item.product.id === product.id);
+  const cartItem = cart.find(item => 
+    item.product.id === product.id && 
+    (item.selectedVariant?.unit || item.product.unit) === selectedVariant.unit
+  );
   const quantity = cartItem?.quantity || 0;
 
-  const discount = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+  const currentPrice = selectedVariant.price;
+  const currentOriginalPrice = selectedVariant.originalPrice;
+  const discount = currentOriginalPrice
+    ? Math.round(((currentOriginalPrice - currentPrice) / currentOriginalPrice) * 100)
     : 0;
 
   const freshnessBadgeConfig = {
@@ -53,6 +65,8 @@ const ProductDetail: React.FC = () => {
     { icon: Leaf, label: 'Fresh Guaranteed', desc: 'Or full refund' },
     { icon: Clock, label: 'Express Delivery', desc: 'In 2-4 hours' },
   ];
+
+  const hasVariants = product.quantityVariants && product.quantityVariants.length > 1;
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -119,7 +133,7 @@ const ProductDetail: React.FC = () => {
             <h1 className="font-heading text-2xl font-bold text-foreground mb-1">
               {product.name}
             </h1>
-            <p className="text-sm text-muted-foreground">{product.unit}</p>
+            <p className="text-sm text-muted-foreground">{selectedVariant.unit}</p>
           </div>
           {product.rating && (
             <div className="flex items-center gap-1 bg-trust/10 px-3 py-1.5 rounded-xl">
@@ -134,13 +148,29 @@ const ProductDetail: React.FC = () => {
 
         {/* Price */}
         <div className="flex items-center gap-3 mb-5">
-          <span className="text-3xl font-bold text-primary">₹{product.price}</span>
-          {product.originalPrice && (
+          <span className="text-3xl font-bold text-primary">₹{currentPrice}</span>
+          {currentOriginalPrice && (
             <span className="text-lg text-muted-foreground line-through">
-              ₹{product.originalPrice}
+              ₹{currentOriginalPrice}
             </span>
           )}
+          {discount > 0 && (
+            <Badge variant="offer" className="text-sm">
+              Save ₹{currentOriginalPrice! - currentPrice}
+            </Badge>
+          )}
         </div>
+
+        {/* Quantity Variants Selector */}
+        {hasVariants && (
+          <div className="mb-5 p-4 bg-secondary/50 rounded-xl border border-border">
+            <QuantitySelector
+              variants={product.quantityVariants!}
+              selectedVariant={selectedVariant}
+              onSelect={setSelectedVariant}
+            />
+          </div>
+        )}
 
         {/* Farm Source */}
         {product.farmSource && (
@@ -160,6 +190,17 @@ const ProductDetail: React.FC = () => {
             <p className="text-sm text-muted-foreground leading-relaxed">
               {product.description}
             </p>
+          </div>
+        )}
+
+        {/* Dietary Tags */}
+        {product.dietaryTags && product.dietaryTags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-5">
+            {product.dietaryTags.map(tag => (
+              <Badge key={tag} variant="soft" className="text-xs">
+                {tag.replace('-', ' ')}
+              </Badge>
+            ))}
           </div>
         )}
 
@@ -223,11 +264,11 @@ const ProductDetail: React.FC = () => {
             <Button
               variant="hero"
               size="xl"
-              onClick={() => addToCart(product)}
+              onClick={() => addToCart(product, selectedVariant)}
               className="flex-1 shadow-glow"
             >
               <Plus className="w-5 h-5 mr-2" />
-              Add to Cart — ₹{product.price}
+              Add to Cart — ₹{currentPrice}
             </Button>
           ) : (
             <>
@@ -235,7 +276,7 @@ const ProductDetail: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => updateCartQuantity(product.id, quantity - 1)}
+                  onClick={() => updateCartQuantity(product.id, quantity - 1, selectedVariant)}
                   className="h-10 w-10 text-primary hover:bg-primary/20"
                 >
                   <Minus className="w-5 h-5" />
@@ -246,7 +287,7 @@ const ProductDetail: React.FC = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => updateCartQuantity(product.id, quantity + 1)}
+                  onClick={() => updateCartQuantity(product.id, quantity + 1, selectedVariant)}
                   className="h-10 w-10 text-primary hover:bg-primary/20"
                 >
                   <Plus className="w-5 h-5" />
@@ -258,7 +299,7 @@ const ProductDetail: React.FC = () => {
                 onClick={() => navigate('/cart')}
                 className="flex-1 shadow-glow"
               >
-                View Cart — ₹{product.price * quantity}
+                View Cart — ₹{currentPrice * quantity}
                 <ChevronRight className="w-5 h-5 ml-1" />
               </Button>
             </>

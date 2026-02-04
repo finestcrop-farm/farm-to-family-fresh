@@ -66,7 +66,9 @@ const Favorites: React.FC = () => {
   const handleAddToCart = (productId: string) => {
     const product = products.find(p => p.id === productId);
     if (product) {
-      addToCart(product, 1);
+      // Use first quantity variant if available, otherwise use default
+      const variant = product.quantityVariants?.[0];
+      addToCart(product, variant);
       toast.success('Added to cart');
     }
   };

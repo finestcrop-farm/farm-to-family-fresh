@@ -1,3 +1,9 @@
+export interface QuantityVariant {
+  unit: string;
+  price: number;
+  originalPrice?: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -21,6 +27,8 @@ export interface Product {
   // Dietary tags
   dietaryTags?: DietaryTag[];
   isSubscribable?: boolean;
+  // Quantity variants for flexible sizing
+  quantityVariants?: QuantityVariant[];
 }
 
 export type DietaryTag = 
@@ -55,6 +63,7 @@ export interface Subcategory {
 export interface CartItem {
   product: Product;
   quantity: number;
+  selectedVariant?: QuantityVariant;
   isSubscription?: boolean;
   subscriptionPlan?: SubscriptionPlan;
 }

@@ -122,59 +122,64 @@ const Cart: React.FC = () => {
 
         {/* Cart Items */}
         <div className="space-y-3">
-          {cart.map((item, index) => (
-            <div
-              key={item.product.id}
-              className="flex gap-3 p-3 bg-card rounded-xl shadow-card border border-border/50 animate-fade-in"
-              style={{ animationDelay: `${index * 50}ms` }}
-            >
-              <img
-                src={item.product.image}
-                alt={item.product.name}
-                onClick={() => navigate(`/product/${item.product.id}`)}
-                className="w-20 h-20 object-cover rounded-lg bg-muted cursor-pointer hover:opacity-80 transition-opacity"
-              />
-              <div className="flex-1 min-w-0">
-                <h3 
+          {cart.map((item, index) => {
+            const itemPrice = item.selectedVariant?.price || item.product.price;
+            const itemUnit = item.selectedVariant?.unit || item.product.unit;
+            
+            return (
+              <div
+                key={`${item.product.id}-${itemUnit}`}
+                className="flex gap-3 p-3 bg-card rounded-xl shadow-card border border-border/50 animate-fade-in"
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <img
+                  src={item.product.image}
+                  alt={item.product.name}
                   onClick={() => navigate(`/product/${item.product.id}`)}
-                  className="font-semibold text-sm text-foreground line-clamp-2 mb-1 cursor-pointer hover:text-primary transition-colors"
-                >
-                  {item.product.name}
-                </h3>
-                <p className="text-xs text-muted-foreground mb-2">{item.product.unit}</p>
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-primary text-lg">
-                    ₹{item.product.price * item.quantity}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => removeFromCart(item.product.id)}
-                      className="p-1.5 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                    <div className="flex items-center gap-2 bg-primary/10 rounded-xl px-2 py-1">
+                  className="w-20 h-20 object-cover rounded-lg bg-muted cursor-pointer hover:opacity-80 transition-opacity"
+                />
+                <div className="flex-1 min-w-0">
+                  <h3 
+                    onClick={() => navigate(`/product/${item.product.id}`)}
+                    className="font-semibold text-sm text-foreground line-clamp-2 mb-1 cursor-pointer hover:text-primary transition-colors"
+                  >
+                    {item.product.name}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-2">{itemUnit}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-primary text-lg">
+                      ₹{itemPrice * item.quantity}
+                    </span>
+                    <div className="flex items-center gap-2">
                       <button
-                        onClick={() => updateCartQuantity(item.product.id, item.quantity - 1)}
-                        className="p-1 rounded hover:bg-primary/20 text-primary transition-colors"
+                        onClick={() => removeFromCart(item.product.id, item.selectedVariant)}
+                        className="p-1.5 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"
                       >
-                        <Minus className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
-                      <span className="font-bold text-primary min-w-[24px] text-center">
-                        {item.quantity}
-                      </span>
-                      <button
-                        onClick={() => updateCartQuantity(item.product.id, item.quantity + 1)}
-                        className="p-1 rounded hover:bg-primary/20 text-primary transition-colors"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-2 bg-primary/10 rounded-xl px-2 py-1">
+                        <button
+                          onClick={() => updateCartQuantity(item.product.id, item.quantity - 1, item.selectedVariant)}
+                          className="p-1 rounded hover:bg-primary/20 text-primary transition-colors"
+                        >
+                          <Minus className="w-4 h-4" />
+                        </button>
+                        <span className="font-bold text-primary min-w-[24px] text-center">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => updateCartQuantity(item.product.id, item.quantity + 1, item.selectedVariant)}
+                          className="p-1 rounded hover:bg-primary/20 text-primary transition-colors"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Coupon Section */}
