@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -31,8 +31,8 @@ export interface OrderItem {
   price: number;
 }
 
-export const useOrders = () => {
-  const { user } = useAuth();
+ export const useOrders = () => {
+   const { user, profile } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -169,11 +169,103 @@ export const useOrders = () => {
     }
   };
 
-  return {
+   const cancelOrder = async (orderId: string) => {
+     if (!user) {
+       toast.error('Please login to cancel order');
+       return false;
+     }
+ 
+     try {
+       const { data: order, error: fetchError } = await supabase
+         .from('orders')
+         .select('order_number, status')
+         .eq('id', orderId)
+         .single();
+ 
+       if (fetchError) throw fetchError;
+ 
+       if (['delivered', 'cancelled', 'out_for_delivery'].includes(order.status)) {
+         toast.error('Cannot cancel order in current status');
+         return false;
+       }
+ 
+       const { error: updateError } = await supabase
+         .from('orders')
+         .update({ 
+           status: 'cancelled',
+           updated_at: new Date().toISOString()
+         })
+         .eq('id', orderId);
+ 
+       if (updateError) throw updateError;
+ 
+       // Send SMS notification
+       if (profile?.phone) {
+         try {
+           await supabase.functions.invoke('send-order-sms', {
+             body: {
+               to: profile.phone,
+               orderNumber: order.order_number,
+               type: 'cancelled',
+             }
+           });
+         } catch (smsError) {
+           console.log('SMS notification failed:', smsError);
+         }
+       }
+ 
+       toast.success('Order cancelled successfully');
+       await fetchOrders();
+       return true;
+     } catch (error) {
+       console.error('Error cancelling order:', error);
+       toast.error('Failed to cancel order');
+       return false;
+     }
+   };
+ 
+   const reorder = async (orderId: string) => {
+     try {
+       const orderData = await getOrderById(orderId);
+       if (!orderData) {
+         toast.error('Order not found');
+         return null;
+       }
+       
+       return orderData.items;
+     } catch (error) {
+       console.error('Error getting order items:', error);
+       toast.error('Failed to get order items');
+       return null;
+     }
+   };
+ 
+   const sendOrderSMS = async (orderNumber: string, type: string, phone: string, amount?: number, estimatedTime?: string) => {
+     try {
+       await supabase.functions.invoke('send-order-sms', {
+         body: {
+           to: phone,
+           orderNumber,
+           type,
+           amount,
+           estimatedTime,
+         }
+       });
+       return true;
+     } catch (error) {
+       console.error('SMS notification failed:', error);
+       return false;
+     }
+   };
+ 
+   return {
     orders,
     isLoading,
     createOrder,
     getOrderById,
-    refetch: fetchOrders,
+     refetch: fetchOrders,
+     cancelOrder,
+     reorder,
+     sendOrderSMS,
   };
 };

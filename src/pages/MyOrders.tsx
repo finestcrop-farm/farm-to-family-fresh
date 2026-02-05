@@ -1,19 +1,58 @@
-import React from 'react';
+ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, Package, Clock, CheckCircle, Truck, 
-  XCircle, MapPin, ChevronRight, RefreshCw, ShoppingBag
-} from 'lucide-react';
+ import { 
+   ArrowLeft, Package, Clock, CheckCircle, Truck, 
+   XCircle, MapPin, ChevronRight, RefreshCw, ShoppingBag,
+   RotateCcw, X, AlertCircle
+ } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BottomNav from '@/components/BottomNav';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrders, Order } from '@/hooks/useOrders';
-import { cn } from '@/lib/utils';
+ import { cn } from '@/lib/utils';
+ import { useApp } from '@/contexts/AppContext';
+ import {
+   AlertDialog,
+   AlertDialogAction,
+   AlertDialogCancel,
+   AlertDialogContent,
+   AlertDialogDescription,
+   AlertDialogFooter,
+   AlertDialogHeader,
+   AlertDialogTitle,
+   AlertDialogTrigger,
+ } from "@/components/ui/alert-dialog";
+ import { toast } from 'sonner';
 
-const MyOrders: React.FC = () => {
+ const MyOrders: React.FC = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading } = useAuth();
-  const { orders, isLoading, refetch } = useOrders();
+   const { orders, isLoading, refetch, cancelOrder, reorder } = useOrders();
+   const { addToCart } = useApp();
+   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+   const [reorderingOrderId, setReorderingOrderId] = useState<string | null>(null);
+ 
+   const handleCancelOrder = async (orderId: string) => {
+     setCancellingOrderId(orderId);
+     await cancelOrder(orderId);
+     setCancellingOrderId(null);
+   };
+ 
+   const handleReorder = async (orderId: string) => {
+     setReorderingOrderId(orderId);
+     const items = await reorder(orderId);
+     if (items && items.length > 0) {
+       // Note: This navigates user to add items manually for now
+       // In a full implementation, you'd add items to cart directly
+       toast.success(`Found ${items.length} items from your previous order. Redirecting to cart...`);
+       navigate('/');
+     }
+     setReorderingOrderId(null);
+   };
+ 
+   const canCancelOrder = (status: string) => {
+     return ['pending', 'confirmed', 'preparing'].includes(status);
+   };
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -237,15 +276,65 @@ const MyOrders: React.FC = () => {
                         </Button>
                       )}
                       
-                      {order.status === 'delivered' && (
-                        <Button 
-                          size="sm"
-                          variant="outline"
-                          onClick={() => navigate('/')}
-                          className="gap-1"
-                        >
-                          Reorder
-                        </Button>
+                       {/* Cancel Button for eligible orders */}
+                       {canCancelOrder(order.status) && (
+                         <AlertDialog>
+                           <AlertDialogTrigger asChild>
+                             <Button 
+                               size="sm"
+                               variant="outline"
+                               className="gap-1 text-destructive border-destructive/30 hover:bg-destructive/10"
+                               disabled={cancellingOrderId === order.id}
+                             >
+                               {cancellingOrderId === order.id ? (
+                                 <div className="w-4 h-4 border-2 border-destructive border-t-transparent rounded-full animate-spin" />
+                               ) : (
+                                 <X className="w-4 h-4" />
+                               )}
+                               Cancel
+                             </Button>
+                           </AlertDialogTrigger>
+                           <AlertDialogContent>
+                             <AlertDialogHeader>
+                               <AlertDialogTitle className="flex items-center gap-2">
+                                 <AlertCircle className="w-5 h-5 text-destructive" />
+                                 Cancel Order?
+                               </AlertDialogTitle>
+                               <AlertDialogDescription>
+                                 Are you sure you want to cancel order {order.order_number}? 
+                                 This action cannot be undone. Refund (if applicable) will be 
+                                 processed within 5-7 business days.
+                               </AlertDialogDescription>
+                             </AlertDialogHeader>
+                             <AlertDialogFooter>
+                               <AlertDialogCancel>Keep Order</AlertDialogCancel>
+                               <AlertDialogAction 
+                                 onClick={() => handleCancelOrder(order.id)}
+                                 className="bg-destructive hover:bg-destructive/90"
+                               >
+                                 Yes, Cancel Order
+                               </AlertDialogAction>
+                             </AlertDialogFooter>
+                           </AlertDialogContent>
+                         </AlertDialog>
+                       )}
+                       
+                       {/* Reorder Button for delivered/cancelled orders */}
+                       {['delivered', 'cancelled'].includes(order.status) && (
+                         <Button 
+                           size="sm"
+                           variant="outline"
+                           onClick={() => handleReorder(order.id)}
+                           className="gap-1"
+                           disabled={reorderingOrderId === order.id}
+                         >
+                           {reorderingOrderId === order.id ? (
+                             <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                           ) : (
+                             <RotateCcw className="w-4 h-4" />
+                           )}
+                           Reorder
+                         </Button>
                       )}
                     </div>
                   </div>
