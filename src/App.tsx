@@ -32,6 +32,7 @@ import Addresses from "./pages/Addresses";
 import Location from "./pages/Location";
 import Help from "./pages/Help";
 import Offers from "./pages/Offers";
+import Payments from "./pages/Payments";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => (
               <Route path="/location" element={<Location />} />
               <Route path="/help" element={<Help />} />
               <Route path="/offers" element={<Offers />} />
+              <Route path="/payments" element={<Payments />} />
               <Route path="/rewards" element={<ComingSoon title="Rewards" description="Earn and redeem points here soon." />} />
               <Route path="/rate" element={<ComingSoon title="Rate Us" description="Your feedback will help us improve." />} />
               <Route path="/privacy" element={<ComingSoon title="Privacy Policy" description="Our terms and privacy policy will appear here." />} />
