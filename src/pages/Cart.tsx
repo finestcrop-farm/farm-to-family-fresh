@@ -263,7 +263,7 @@ const Cart: React.FC = () => {
           </div>
         </div>
 
-        <Button variant="hero" size="xl" className="w-full shadow-glow">
+        <Button variant="hero" size="xl" className="w-full shadow-glow" onClick={() => navigate('/checkout')}>
           Proceed to Checkout
           <ChevronRight className="w-5 h-5 ml-2" />
         </Button>
