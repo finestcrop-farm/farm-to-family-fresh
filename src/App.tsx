@@ -79,9 +79,10 @@ const App = () => (
               <Route path="/offers" element={<Offers />} />
               <Route path="/payments" element={<Payments />} />
               <Route path="/chat" element={<Chat />} />
-              <Route path="/rewards" element={<ComingSoon title="Rewards" description="Earn and redeem points here soon." />} />
-              <Route path="/rate" element={<ComingSoon title="Rate Us" description="Your feedback will help us improve." />} />
-              <Route path="/privacy" element={<ComingSoon title="Privacy Policy" description="Our terms and privacy policy will appear here." />} />
+              <Route path="/rewards" element={<Rewards />} />
+              <Route path="/rate" element={<RateUs />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<TermsConditions />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
