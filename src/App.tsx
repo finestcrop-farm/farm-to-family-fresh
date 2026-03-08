@@ -33,6 +33,7 @@ import Location from "./pages/Location";
 import Help from "./pages/Help";
 import Offers from "./pages/Offers";
 import Payments from "./pages/Payments";
+import Chat from "./pages/Chat";
 
 const queryClient = new QueryClient();
 
