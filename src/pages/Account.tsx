@@ -37,7 +37,8 @@ const Account: React.FC = () => {
       items: [
         { icon: HelpCircle, label: 'Help & Support', desc: 'FAQs & contact us', path: '/help', color: 'text-primary bg-primary/10' },
         { icon: Star, label: 'Rate Us', desc: 'Share your feedback', path: '/rate', color: 'text-trust bg-trust/10' },
-        { icon: Shield, label: 'Privacy Policy', desc: 'Terms & conditions', path: '/privacy', color: 'text-muted-foreground bg-secondary' },
+        { icon: Shield, label: 'Privacy Policy', desc: 'Data protection info', path: '/privacy', color: 'text-muted-foreground bg-secondary' },
+        { icon: Shield, label: 'Terms & Conditions', desc: 'Usage terms', path: '/terms', color: 'text-muted-foreground bg-secondary' },
       ],
     },
   ];
