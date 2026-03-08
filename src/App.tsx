@@ -34,6 +34,10 @@ import Help from "./pages/Help";
 import Offers from "./pages/Offers";
 import Payments from "./pages/Payments";
 import Chat from "./pages/Chat";
+import Rewards from "./pages/Rewards";
+import RateUs from "./pages/RateUs";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsConditions from "./pages/TermsConditions";
 
 const queryClient = new QueryClient();
 
