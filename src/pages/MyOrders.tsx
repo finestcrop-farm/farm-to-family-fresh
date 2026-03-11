@@ -42,7 +42,6 @@ import { useOrders, Order } from '@/hooks/useOrders';
      setReorderingOrderId(orderId);
      const items = await reorder(orderId);
      if (items && items.length > 0) {
-       // Add each item to cart using product data
        for (const item of items) {
          const product = {
            id: item.product_id,
@@ -54,7 +53,10 @@ import { useOrders, Order } from '@/hooks/useOrders';
            subcategory: '',
            inStock: true,
          };
-         addToCart(product, item.quantity);
+         // Add to cart once per quantity unit
+         for (let i = 0; i < item.quantity; i++) {
+           addToCart(product);
+         }
        }
        toast.success(`${items.length} items added to cart!`);
        navigate('/cart');
