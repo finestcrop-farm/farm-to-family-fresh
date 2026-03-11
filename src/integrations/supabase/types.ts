@@ -259,6 +259,51 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          chat_messages: boolean | null
+          created_at: string | null
+          delivery_updates: boolean | null
+          dnd_enabled: boolean | null
+          id: string
+          offers: boolean | null
+          order_updates: boolean | null
+          rewards: boolean | null
+          sound_enabled: boolean | null
+          updated_at: string | null
+          user_id: string
+          vibration_enabled: boolean | null
+        }
+        Insert: {
+          chat_messages?: boolean | null
+          created_at?: string | null
+          delivery_updates?: boolean | null
+          dnd_enabled?: boolean | null
+          id?: string
+          offers?: boolean | null
+          order_updates?: boolean | null
+          rewards?: boolean | null
+          sound_enabled?: boolean | null
+          updated_at?: string | null
+          user_id: string
+          vibration_enabled?: boolean | null
+        }
+        Update: {
+          chat_messages?: boolean | null
+          created_at?: string | null
+          delivery_updates?: boolean | null
+          dnd_enabled?: boolean | null
+          id?: string
+          offers?: boolean | null
+          order_updates?: boolean | null
+          rewards?: boolean | null
+          sound_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+          vibration_enabled?: boolean | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -626,6 +671,36 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          reference_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          id?: string
+          reference_id?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          reference_id?: string | null
+          title?: string
+          type?: string
           user_id?: string
         }
         Relationships: []
