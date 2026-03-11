@@ -9,11 +9,16 @@ import { Button } from '@/components/ui/button';
 import BottomNav from '@/components/BottomNav';
 import logoImg from '@/assets/logo.png';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrders } from '@/hooks/useOrders';
 
 const Account: React.FC = () => {
   const navigate = useNavigate();
-  const { user, profile, isAdmin, signOut, isLoading, isDevAdmin } = useAuth();
-  const showAdmin = isAdmin || isDevAdmin;
+  const { user, profile, isAdmin, signOut, isLoading } = useAuth();
+  const { orders } = useOrders();
+
+  const orderCount = orders.length;
+  const totalSpent = orders.reduce((sum, o) => sum + Number(o.total_amount), 0);
+  const rewardPoints = Math.floor(totalSpent / 10); // 1 point per ₹10
 
   const menuItems = [
     {
@@ -58,7 +63,6 @@ const Account: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
       <header className="bg-gradient-hero text-primary-foreground safe-area-top">
         <div className="px-4 py-6">
           <div className="flex items-center gap-4">
@@ -72,14 +76,14 @@ const Account: React.FC = () => {
                     <h1 className="font-heading text-xl font-bold">
                       {profile?.full_name || 'Welcome!'}
                     </h1>
-                    {showAdmin && (
+                    {isAdmin && (
                       <span className="px-2 py-0.5 bg-amber-500/20 text-amber-200 text-xs font-semibold rounded-full flex items-center gap-1">
                         <Crown className="w-3 h-3" />
                         Admin
                       </span>
                     )}
                   </div>
-                  <p className="text-sm opacity-80">{profile?.phone || user.phone}</p>
+                  <p className="text-sm opacity-80">{profile?.phone || user.phone || user.email}</p>
                 </>
               ) : (
                 <>
@@ -104,8 +108,7 @@ const Account: React.FC = () => {
       </header>
 
       <main className="px-4 py-4 space-y-6">
-        {/* Admin Panel Link */}
-        {showAdmin && (
+        {isAdmin && (
           <button
             onClick={() => navigate('/admin')}
             className="w-full p-4 bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl shadow-lg flex items-center gap-4 text-white"
@@ -121,11 +124,10 @@ const Account: React.FC = () => {
           </button>
         )}
 
-        {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: 'Orders', value: '0', icon: Package, color: 'text-primary' },
-            { label: 'Rewards', value: '0', icon: Gift, color: 'text-accent' },
+            { label: 'Orders', value: String(orderCount), icon: Package, color: 'text-primary' },
+            { label: 'Rewards', value: String(rewardPoints), icon: Gift, color: 'text-accent' },
             { label: 'Wallet', value: '₹0', icon: Wallet, color: 'text-trust' },
           ].map((stat) => (
             <div key={stat.label} className="p-4 bg-card rounded-xl text-center shadow-card border border-border animate-fade-in">
@@ -136,7 +138,6 @@ const Account: React.FC = () => {
           ))}
         </div>
 
-        {/* Menu Sections */}
         {menuItems.map((section, sectionIndex) => (
           <div key={section.section} className="animate-fade-in" style={{ animationDelay: `${sectionIndex * 100}ms` }}>
             <h2 className="font-heading text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 px-1">
@@ -163,7 +164,6 @@ const Account: React.FC = () => {
           </div>
         ))}
 
-        {/* Settings & Logout */}
         <div className="space-y-2">
           <button 
             onClick={() => navigate('/notification-settings')}
@@ -189,7 +189,6 @@ const Account: React.FC = () => {
           )}
         </div>
 
-        {/* Contact Section */}
         <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
           <h3 className="font-semibold text-foreground text-sm mb-2">Need Help?</h3>
           <div className="flex items-center gap-3">
@@ -205,13 +204,8 @@ const Account: React.FC = () => {
           </div>
         </div>
 
-        {/* App Info */}
         <div className="text-center pt-4 pb-2">
-          <img 
-            src={logoImg} 
-            alt="Our Pure Naturals" 
-            className="w-28 h-auto mx-auto mb-2 opacity-60"
-          />
+          <img src={logoImg} alt="Our Pure Naturals" className="w-28 h-auto mx-auto mb-2 opacity-60" />
           <p className="text-xs text-muted-foreground">
             Version 1.0.0 • Made with 💚 in India
           </p>

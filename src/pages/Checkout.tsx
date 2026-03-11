@@ -244,9 +244,10 @@
          console.log('SMS notification failed:', smsError);
        }
        
-       clearCart();
-       toast.success('Order placed successfully!');
-       navigate('/order-confirmation');
+    const dbOrder = await createDatabaseOrder('cod', 'pending');
+    clearCart();
+    toast.success('Order placed successfully!');
+    navigate('/order-confirmation', { state: { orderId: dbOrder.id } });
      } catch (error) {
        console.error('Error creating order:', error);
        toast.error('Failed to place order. Please try again.');
