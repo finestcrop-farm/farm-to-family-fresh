@@ -191,9 +191,9 @@
            });
  
            if (verifyResult?.verified) {
-             clearCart();
-             toast.success('Payment successful!');
-             navigate('/order-confirmation');
+      clearCart();
+      toast.success('Payment successful!');
+      navigate('/order-confirmation', { state: { orderId: dbOrder.id } });
            } else {
              toast.error('Payment verification failed. Please contact support.');
            }
