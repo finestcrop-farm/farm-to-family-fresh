@@ -16,14 +16,13 @@ type AuthStep = 'choose' | 'form' | 'otp';
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
-  const { user, signInWithPhone, verifyOTP, signUp, devAdminLogin, isDevAdmin } = useAuth();
+  const { user, signInWithPhone, verifyOTP, signUp } = useAuth();
   const { completeOnboarding } = useApp();
   
   const [mode, setMode] = useState<AuthMode>('login');
   const [method, setMethod] = useState<AuthMethod>('email');
   const [step, setStep] = useState<AuthStep>('choose');
   
-  // Form fields
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -33,12 +32,11 @@ const Auth: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
 
-  // Redirect if already logged in
   useEffect(() => {
-    if (user || isDevAdmin) {
+    if (user) {
       navigate('/');
     }
-  }, [user, isDevAdmin, navigate]);
+  }, [user, navigate]);
 
   const startResendTimer = () => {
     setResendTimer(30);
@@ -82,13 +80,6 @@ const Auth: React.FC = () => {
     
     if (phone.length !== 10) {
       toast.error('Please enter a valid 10-digit phone number');
-      return;
-    }
-
-    // Try dev admin login first (bypasses OTP)
-    if (devAdminLogin(phone)) {
-      completeOnboarding();
-      navigate('/');
       return;
     }
     
@@ -137,28 +128,21 @@ const Auth: React.FC = () => {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
-            data: {
-              full_name: name,
-            },
+            data: { full_name: name },
           },
         });
         
         if (error) {
           toast.error(error.message);
         } else if (data.user && data.session) {
-          // Auto-confirm is enabled, user is logged in immediately
           toast.success('Account created! Welcome! 🎉');
           completeOnboarding();
           navigate('/');
         } else if (data.user && !data.session) {
-          // Email confirmation required
           toast.success('Account created! Check your email to confirm.');
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
         
         if (error) {
           toast.error(error.message);
@@ -236,7 +220,6 @@ const Auth: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col safe-area-top safe-area-bottom">
-      {/* Header with gradient */}
       <div className="bg-gradient-hero text-primary-foreground px-6 pt-10 pb-16 relative overflow-hidden">
         <div className="absolute -top-20 -right-20 w-48 h-48 bg-primary-foreground/5 rounded-full" />
         <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-primary-foreground/5 rounded-full" />
@@ -251,30 +234,18 @@ const Auth: React.FC = () => {
               <span className="text-sm font-medium">Back</span>
             </button>
           )}
-          <img 
-            src={logoImg} 
-            alt="OurPureNaturals" 
-            className="h-12 w-auto mb-5"
-          />
+          <img src={logoImg} alt="OurPureNaturals" className="h-12 w-auto mb-5" />
           <h1 className="font-heading text-2xl font-bold mb-1">{getTitle()}</h1>
           <p className="text-primary-foreground/80">{getSubtitle()}</p>
         </div>
       </div>
 
-      {/* Content */}
       <div className="flex-1 px-6 -mt-6 relative z-10 pb-8">
         <div className="bg-card rounded-2xl shadow-elevated p-6 border border-border">
           
-          {/* Step: Choose method */}
           {step === 'choose' && (
             <div className="space-y-4">
-              {/* Guest continue */}
-              <Button
-                variant="outline"
-                size="xl"
-                className="w-full border-dashed border-2"
-                onClick={handleGuestContinue}
-              >
+              <Button variant="outline" size="xl" className="w-full border-dashed border-2" onClick={handleGuestContinue}>
                 <User className="w-5 h-5 mr-2" />
                 Continue without account
               </Button>
@@ -288,14 +259,7 @@ const Auth: React.FC = () => {
                 </div>
               </div>
 
-              {/* Google */}
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full"
-                onClick={handleGoogleSignIn}
-                disabled={isLoading}
-              >
+              <Button variant="outline" size="lg" className="w-full" onClick={handleGoogleSignIn} disabled={isLoading}>
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -305,42 +269,25 @@ const Auth: React.FC = () => {
                 Continue with Google
               </Button>
 
-              {/* Email */}
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full"
-                onClick={() => { setMethod('email'); setStep('form'); }}
-              >
+              <Button variant="outline" size="lg" className="w-full" onClick={() => { setMethod('email'); setStep('form'); }}>
                 <Mail className="w-5 h-5 mr-2" />
                 Continue with Email
               </Button>
 
-              {/* Phone */}
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full"
-                onClick={() => { setMethod('phone'); setStep('form'); }}
-              >
+              <Button variant="outline" size="lg" className="w-full" onClick={() => { setMethod('phone'); setStep('form'); }}>
                 <Phone className="w-5 h-5 mr-2" />
                 Continue with Phone
               </Button>
 
-              {/* Toggle login/signup */}
               <p className="text-center text-sm text-muted-foreground pt-4">
                 {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
-                <button
-                  onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-                  className="text-primary font-semibold hover:underline"
-                >
+                <button onClick={() => setMode(mode === 'login' ? 'signup' : 'login')} className="text-primary font-semibold hover:underline">
                   {mode === 'login' ? 'Sign Up' : 'Login'}
                 </button>
               </p>
             </div>
           )}
 
-          {/* Step: Form (email or phone) */}
           {step === 'form' && method === 'email' && (
             <form onSubmit={handleEmailSubmit} className="space-y-4">
               {mode === 'signup' && (
@@ -348,14 +295,8 @@ const Auth: React.FC = () => {
                   <label className="text-sm font-medium text-foreground">Full Name</label>
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Enter your name"
-                      className="w-full pl-12 pr-4 py-3.5 bg-muted/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                      required
-                    />
+                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter your name"
+                      className="w-full pl-12 pr-4 py-3.5 bg-muted/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" required />
                   </div>
                 </div>
               )}
@@ -364,15 +305,8 @@ const Auth: React.FC = () => {
                 <label className="text-sm font-medium text-foreground">Email</label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    className="w-full pl-12 pr-4 py-3.5 bg-muted/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                    required
-                    autoFocus
-                  />
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email"
+                    className="w-full pl-12 pr-4 py-3.5 bg-muted/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" required autoFocus />
                 </div>
               </div>
 
@@ -380,32 +314,16 @@ const Auth: React.FC = () => {
                 <label className="text-sm font-medium text-foreground">Password</label>
                 <div className="relative">
                   <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                  <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)}
                     placeholder={mode === 'signup' ? 'Create a password (min 6 chars)' : 'Enter your password'}
-                    className="w-full pl-12 pr-12 py-3.5 bg-muted/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                    required
-                    minLength={6}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
+                    className="w-full pl-12 pr-12 py-3.5 bg-muted/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" required minLength={6} />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                variant="hero"
-                size="xl"
-                className="w-full"
-                disabled={isLoading}
-              >
+              <Button type="submit" variant="hero" size="xl" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <div className="flex items-center gap-2">
                     <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
@@ -421,11 +339,7 @@ const Auth: React.FC = () => {
 
               <p className="text-center text-sm text-muted-foreground">
                 {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
-                <button
-                  type="button"
-                  onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-                  className="text-primary font-semibold hover:underline"
-                >
+                <button type="button" onClick={() => setMode(mode === 'login' ? 'signup' : 'login')} className="text-primary font-semibold hover:underline">
                   {mode === 'login' ? 'Sign Up' : 'Login'}
                 </button>
               </p>
@@ -439,14 +353,8 @@ const Auth: React.FC = () => {
                   <label className="text-sm font-medium text-foreground">Full Name</label>
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Enter your name"
-                      className="w-full pl-12 pr-4 py-3.5 bg-muted/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                      required
-                    />
+                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter your name"
+                      className="w-full pl-12 pr-4 py-3.5 bg-muted/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" required />
                   </div>
                 </div>
               )}
@@ -458,29 +366,12 @@ const Auth: React.FC = () => {
                     <span className="text-base">🇮🇳</span>
                     <span className="text-sm font-semibold text-foreground">+91</span>
                   </div>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    placeholder="Enter 10 digit number"
-                    className="w-full pl-24 pr-4 py-3.5 bg-muted/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                    required
-                    autoFocus
-                  />
+                  <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="Enter 10 digit number"
+                    className="w-full pl-24 pr-4 py-3.5 bg-muted/50 border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all tracking-wider" maxLength={10} autoFocus />
                 </div>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Shield className="w-3 h-3" />
-                  We'll send an OTP to verify your number
-                </p>
               </div>
 
-              <Button
-                type="submit"
-                variant="hero"
-                size="xl"
-                className="w-full"
-                disabled={isLoading || phone.length !== 10}
-              >
+              <Button type="submit" variant="hero" size="xl" className="w-full" disabled={isLoading || phone.length !== 10}>
                 {isLoading ? (
                   <div className="flex items-center gap-2">
                     <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
@@ -488,124 +379,49 @@ const Auth: React.FC = () => {
                   </div>
                 ) : (
                   <>
-                    Get OTP
+                    Send OTP
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </>
                 )}
               </Button>
 
-              {/* Fallback note */}
-              <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
-                <p className="text-xs text-amber-700 dark:text-amber-400">
-                  📱 Phone OTP requires SMS provider configuration. If you don't receive SMS, try Email or Google sign-in instead.
-                </p>
-              </div>
-
               <p className="text-center text-sm text-muted-foreground">
                 {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
-                <button
-                  type="button"
-                  onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-                  className="text-primary font-semibold hover:underline"
-                >
+                <button type="button" onClick={() => setMode(mode === 'login' ? 'signup' : 'login')} className="text-primary font-semibold hover:underline">
                   {mode === 'login' ? 'Sign Up' : 'Login'}
                 </button>
               </p>
             </form>
           )}
 
-          {/* Step: OTP verification */}
           {step === 'otp' && (
             <div className="space-y-6">
-              <div className="text-center">
-                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center animate-pulse-soft">
-                  <Phone className="w-10 h-10 text-primary" />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  We've sent a verification code to
-                </p>
-                <p className="font-semibold text-foreground text-lg mt-1">
-                  +91 {phone}
-                </p>
-                <button 
-                  onClick={() => setStep('form')}
-                  className="text-sm text-primary font-medium mt-1 hover:underline"
-                >
-                  Change number
-                </button>
-              </div>
-
-              <OTPInput 
-                length={6} 
-                onComplete={handleVerifyOTP}
-                disabled={isLoading}
-              />
-
-              {isLoading && (
-                <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                  <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
-                  <span className="text-sm">Verifying...</span>
-                </div>
-              )}
-
-              <div className="text-center space-y-3">
-                <p className="text-sm text-muted-foreground">Didn't receive the code?</p>
-                <button
-                  onClick={handleResendOTP}
-                  disabled={resendTimer > 0 || isLoading}
-                  className={cn(
-                    "flex items-center justify-center gap-2 mx-auto text-sm font-semibold transition-colors",
-                    resendTimer > 0 || isLoading
-                      ? "text-muted-foreground cursor-not-allowed"
-                      : "text-primary hover:text-primary/80"
-                  )}
-                >
-                  <RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin")} />
+              <OTPInput length={6} onComplete={handleVerifyOTP} disabled={isLoading} />
+              
+              <div className="text-center space-y-2">
+                <button onClick={handleResendOTP} disabled={resendTimer > 0 || isLoading}
+                  className={cn("text-sm font-medium flex items-center justify-center gap-2 mx-auto", resendTimer > 0 ? "text-muted-foreground" : "text-primary hover:underline")}>
+                  <RefreshCw className="w-4 h-4" />
                   {resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend OTP'}
                 </button>
-              </div>
-
-              {/* Fallback options */}
-              <div className="pt-4 border-t border-border">
-                <p className="text-xs text-center text-muted-foreground mb-3">
-                  Having trouble? Try another method:
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => { setMethod('email'); setStep('form'); }}
-                  >
-                    <Mail className="w-4 h-4 mr-1" />
-                    Email
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={handleGoogleSignIn}
-                  >
-                    <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24">
-                      <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    </svg>
-                    Google
-                  </Button>
-                </div>
+                
+                <button onClick={resetToChoose} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 mx-auto">
+                  <ArrowLeft className="w-3 h-3" />
+                  Change number
+                </button>
               </div>
             </div>
           )}
         </div>
+      </div>
 
-        {/* Features - show on choose step */}
-        {step === 'choose' && (
-          <div className="mt-6 text-center">
-            <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-              <Sparkles className="w-3 h-3" />
-              Secure login • Quick checkout • Order tracking
-            </p>
-          </div>
-        )}
+      <div className="px-6 pb-6">
+        <p className="text-xs text-center text-muted-foreground">
+          By continuing, you agree to our{' '}
+          <button onClick={() => navigate('/terms')} className="text-primary hover:underline">Terms</button>
+          {' & '}
+          <button onClick={() => navigate('/privacy')} className="text-primary hover:underline">Privacy Policy</button>
+        </p>
       </div>
     </div>
   );

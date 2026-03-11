@@ -42,10 +42,24 @@ import { useOrders, Order } from '@/hooks/useOrders';
      setReorderingOrderId(orderId);
      const items = await reorder(orderId);
      if (items && items.length > 0) {
-       // Note: This navigates user to add items manually for now
-       // In a full implementation, you'd add items to cart directly
-       toast.success(`Found ${items.length} items from your previous order. Redirecting to cart...`);
-       navigate('/');
+       for (const item of items) {
+         const product = {
+           id: item.product_id,
+           name: item.product_name,
+           price: item.price,
+           unit: '1 unit',
+           image: '',
+           category: '',
+           subcategory: '',
+           inStock: true,
+         };
+         // Add to cart once per quantity unit
+         for (let i = 0; i < item.quantity; i++) {
+           addToCart(product);
+         }
+       }
+       toast.success(`${items.length} items added to cart!`);
+       navigate('/cart');
      }
      setReorderingOrderId(null);
    };

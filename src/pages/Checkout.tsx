@@ -191,9 +191,9 @@
            });
  
            if (verifyResult?.verified) {
-             clearCart();
-             toast.success('Payment successful!');
-             navigate('/order-confirmation');
+      clearCart();
+      toast.success('Payment successful!');
+      navigate('/order-confirmation', { state: { orderId: dbOrder.id } });
            } else {
              toast.error('Payment verification failed. Please contact support.');
            }
@@ -227,14 +227,14 @@
      setIsProcessing(true);
      
      try {
-       await createDatabaseOrder('cod', 'pending');
+       const dbOrder = await createDatabaseOrder('cod', 'pending');
        
        try {
          const selectedSlotData = deliverySlots.find(s => s.id === selectedSlot);
          await supabase.functions.invoke('send-order-sms', {
            body: {
              to: user?.phone || '',
-             orderNumber: 'Your order',
+             orderNumber: dbOrder.order_number || 'Your order',
              type: 'confirmation',
              amount: finalTotal,
              estimatedTime: selectedSlotData?.time || '45 minutes',
@@ -246,7 +246,7 @@
        
        clearCart();
        toast.success('Order placed successfully!');
-       navigate('/order-confirmation');
+       navigate('/order-confirmation', { state: { orderId: dbOrder.id } });
      } catch (error) {
        console.error('Error creating order:', error);
        toast.error('Failed to place order. Please try again.');

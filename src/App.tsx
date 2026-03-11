@@ -26,7 +26,7 @@ import DietaryFilters from "./pages/DietaryFilters";
 import Admin from "./pages/Admin";
 import MyOrders from "./pages/MyOrders";
 import NotFound from "./pages/NotFound";
-import ComingSoon from "./pages/ComingSoon";
+
 import Favorites from "./pages/Favorites";
 import Addresses from "./pages/Addresses";
 import Location from "./pages/Location";
