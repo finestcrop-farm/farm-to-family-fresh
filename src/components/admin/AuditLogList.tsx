@@ -48,7 +48,7 @@ const AuditLogList: React.FC = () => {
   const fetchLogs = async () => {
     setIsLoading(true);
     try {
-      if (isDevAdmin) {
+      if (isAdmin) {
         const { data, error } = await adminRequest<AuditLog[]>({
           action: 'select',
           table: 'admin_audit_logs',
