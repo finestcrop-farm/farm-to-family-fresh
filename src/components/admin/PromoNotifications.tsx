@@ -155,7 +155,7 @@ const PromoNotifications: React.FC<PromoNotificationsProps> = ({ totalUsers, onR
         data: { sent_by: 'admin', sent_at: new Date().toISOString() },
       }));
 
-      if (isDevAdmin) {
+      if (isAdmin) {
         // Use admin proxy to insert notifications - insert one by one or batch
         for (const notification of notifications) {
           const { error: insertError } = await adminRequest({
