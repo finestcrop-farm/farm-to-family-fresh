@@ -18,7 +18,7 @@ interface PromoHistory {
 }
 
 const PromoHistoryList: React.FC = () => {
-  const { isDevAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const { adminRequest } = useAdminProxy();
   const [promoHistory, setPromoHistory] = useState<PromoHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
