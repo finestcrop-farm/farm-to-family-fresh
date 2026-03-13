@@ -26,7 +26,7 @@ const PromoHistoryList: React.FC = () => {
   const fetchHistory = async () => {
     setIsLoading(true);
     try {
-      if (isDevAdmin) {
+      if (isAdmin) {
         // Use admin proxy for dev admin to bypass RLS
         const { data, error } = await adminRequest<PromoHistory[]>({
           action: 'select',
