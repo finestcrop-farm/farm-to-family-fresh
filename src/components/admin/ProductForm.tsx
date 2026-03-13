@@ -97,20 +97,19 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSave, use
       const fileName = `${formData.product_id || Date.now()}.${fileExt}`;
       const filePath = `products/${fileName}`;
 
-      // For dev admin, we need to upload via edge function
       if (useProxy) {
-        // Convert file to base64 for upload via edge function
         const reader = new FileReader();
         reader.onload = async () => {
           try {
             const base64 = (reader.result as string).split(',')[1];
+            const { data: { session } } = await supabase.auth.getSession();
             const response = await fetch(
               `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-storage-upload`,
               {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
-                  'x-dev-admin-key': DEV_ADMIN_PHONE,
+                  'Authorization': `Bearer ${session?.access_token}`,
                   'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
                 },
                 body: JSON.stringify({
