@@ -145,10 +145,10 @@ const Admin: React.FC = () => {
   };
 
   useEffect(() => {
-    if (isAdmin || isDevAdmin) {
+    if (isAdmin) {
       fetchData();
     }
-  }, [isAdmin, isDevAdmin]);
+  }, [isAdmin]);
 
   const updateOrderStatus = async (orderId: string, status: string) => {
     try {
