@@ -63,7 +63,7 @@ type TabType = 'dashboard' | 'products' | 'orders' | 'subscriptions' | 'messages
 
 const Admin: React.FC = () => {
   const navigate = useNavigate();
-  const { isAdmin, isLoading: authLoading, isDevAdmin } = useAuth();
+  const { isAdmin, isLoading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
