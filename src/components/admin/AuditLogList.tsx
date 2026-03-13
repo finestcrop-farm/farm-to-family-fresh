@@ -38,7 +38,7 @@ const actionColors: Record<string, string> = {
 };
 
 const AuditLogList: React.FC = () => {
-  const { isDevAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const { adminRequest } = useAdminProxy();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,7 +48,7 @@ const AuditLogList: React.FC = () => {
   const fetchLogs = async () => {
     setIsLoading(true);
     try {
-      if (isDevAdmin) {
+      if (isAdmin) {
         const { data, error } = await adminRequest<AuditLog[]>({
           action: 'select',
           table: 'admin_audit_logs',
@@ -80,7 +80,7 @@ const AuditLogList: React.FC = () => {
 
   useEffect(() => {
     fetchLogs();
-  }, [isDevAdmin]);
+  }, [isAdmin]);
 
   const filteredLogs = logs.filter((log) => {
     const matchesSearch =

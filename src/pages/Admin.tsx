@@ -63,7 +63,7 @@ type TabType = 'dashboard' | 'products' | 'orders' | 'subscriptions' | 'messages
 
 const Admin: React.FC = () => {
   const navigate = useNavigate();
-  const { isAdmin, isLoading: authLoading, isDevAdmin } = useAuth();
+  const { isAdmin, isLoading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [messages, setMessages] = useState<ContactMessage[]>([]);
@@ -80,11 +80,11 @@ const Admin: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
 
   useEffect(() => {
-    if (!authLoading && !isAdmin && !isDevAdmin) {
+    if (!authLoading && !isAdmin) {
       toast.error('Access denied. Admin only.');
       navigate('/');
     }
-  }, [isAdmin, isDevAdmin, authLoading, navigate]);
+  }, [isAdmin, authLoading, navigate]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -145,10 +145,10 @@ const Admin: React.FC = () => {
   };
 
   useEffect(() => {
-    if (isAdmin || isDevAdmin) {
+    if (isAdmin) {
       fetchData();
     }
-  }, [isAdmin, isDevAdmin]);
+  }, [isAdmin]);
 
   const updateOrderStatus = async (orderId: string, status: string) => {
     try {
@@ -190,7 +190,7 @@ const Admin: React.FC = () => {
     );
   }
 
-  if (!isAdmin && !isDevAdmin) {
+  if (!isAdmin) {
     return null;
   }
 

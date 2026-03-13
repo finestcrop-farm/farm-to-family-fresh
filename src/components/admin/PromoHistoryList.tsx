@@ -18,7 +18,7 @@ interface PromoHistory {
 }
 
 const PromoHistoryList: React.FC = () => {
-  const { isDevAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const { adminRequest } = useAdminProxy();
   const [promoHistory, setPromoHistory] = useState<PromoHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,7 +26,7 @@ const PromoHistoryList: React.FC = () => {
   const fetchHistory = async () => {
     setIsLoading(true);
     try {
-      if (isDevAdmin) {
+      if (isAdmin) {
         // Use admin proxy for dev admin to bypass RLS
         const { data, error } = await adminRequest<PromoHistory[]>({
           action: 'select',
@@ -60,7 +60,7 @@ const PromoHistoryList: React.FC = () => {
 
   useEffect(() => {
     fetchHistory();
-  }, [isDevAdmin]);
+  }, [isAdmin]);
 
   if (isLoading) {
     return (

@@ -52,7 +52,7 @@ const ProductsManager: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [stockFilter, setStockFilter] = useState<'all' | 'in-stock' | 'out-of-stock'>('all');
   
-  const { adminRequest, isDevAdmin } = useAdminProxy();
+  const { adminRequest, isAdmin } = useAdminProxy();
 
   const fetchProducts = async () => {
     setIsLoading(true);
@@ -318,7 +318,7 @@ const ProductsManager: React.FC = () => {
           } : undefined}
           onClose={handleFormClose}
           onSave={handleFormSave}
-          useAdminProxy={isDevAdmin}
+          useAdminProxy={isAdmin}
         />
       )}
     </div>

@@ -1,6 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
-
-const DEV_ADMIN_PHONE = '9989835113';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AdminProxyRequest {
   action: 'select' | 'insert' | 'update' | 'delete' | 'upsert';
@@ -16,27 +15,26 @@ interface AdminProxyResponse<T> {
 }
 
 export const useAdminProxy = () => {
-  const { isDevAdmin, isAdmin, user } = useAuth();
+  const { isAdmin } = useAuth();
 
   const adminRequest = async <T>(request: AdminProxyRequest): Promise<AdminProxyResponse<T>> => {
-    // If dev admin, use the proxy edge function
-    if (isDevAdmin) {
-      return executeProxyRequest<T>(request);
+    if (!isAdmin) {
+      return { data: null, error: new Error('Admin access required') };
     }
 
-    // Otherwise return error - regular admin should use supabase directly
-    return { data: null, error: new Error('Dev admin proxy only') };
-  };
-
-  const executeProxyRequest = async <T>(request: AdminProxyRequest): Promise<AdminProxyResponse<T>> => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        return { data: null, error: new Error('No active session') };
+      }
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-proxy`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-dev-admin-key': DEV_ADMIN_PHONE,
+            'Authorization': `Bearer ${session.access_token}`,
             'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
           },
           body: JSON.stringify(request),
@@ -55,5 +53,5 @@ export const useAdminProxy = () => {
     }
   };
 
-  return { adminRequest, isDevAdmin, isAdmin };
+  return { adminRequest, isAdmin };
 };

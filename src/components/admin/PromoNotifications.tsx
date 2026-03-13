@@ -56,7 +56,7 @@ const notificationTemplates = [
 ];
 
 const PromoNotifications: React.FC<PromoNotificationsProps> = ({ totalUsers, onRefresh }) => {
-  const { isDevAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const { adminRequest } = useAdminProxy();
   const [notificationTitle, setNotificationTitle] = useState('');
   const [notificationMessage, setNotificationMessage] = useState('');
@@ -72,7 +72,7 @@ const PromoNotifications: React.FC<PromoNotificationsProps> = ({ totalUsers, onR
   const fetchHistory = async () => {
     setIsLoadingHistory(true);
     try {
-      if (isDevAdmin) {
+      if (isAdmin) {
         // Use admin proxy for dev admin to bypass RLS
         const { data, error } = await adminRequest<PromoHistory[]>({
           action: 'select',
@@ -106,7 +106,7 @@ const PromoNotifications: React.FC<PromoNotificationsProps> = ({ totalUsers, onR
 
   useEffect(() => {
     fetchHistory();
-  }, [isDevAdmin]);
+  }, [isAdmin]);
 
   const sendPromotionalNotification = async () => {
     if (!notificationTitle.trim() || !notificationMessage.trim()) {
@@ -118,7 +118,7 @@ const PromoNotifications: React.FC<PromoNotificationsProps> = ({ totalUsers, onR
     try {
       let profiles: { user_id: string }[] = [];
 
-      if (isDevAdmin) {
+      if (isAdmin) {
         // Use admin proxy for dev admin
         const { data, error } = await adminRequest<{ user_id: string }[]>({
           action: 'select',
@@ -155,7 +155,7 @@ const PromoNotifications: React.FC<PromoNotificationsProps> = ({ totalUsers, onR
         data: { sent_by: 'admin', sent_at: new Date().toISOString() },
       }));
 
-      if (isDevAdmin) {
+      if (isAdmin) {
         // Use admin proxy to insert notifications - insert one by one or batch
         for (const notification of notifications) {
           const { error: insertError } = await adminRequest({
@@ -201,7 +201,7 @@ const PromoNotifications: React.FC<PromoNotificationsProps> = ({ totalUsers, onR
         push_failure_count: pushResult.failureCount,
       };
 
-      if (isDevAdmin) {
+      if (isAdmin) {
         const { error: historyError } = await adminRequest({
           action: 'insert',
           table: 'promotional_notification_history',

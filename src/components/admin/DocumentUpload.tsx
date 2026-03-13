@@ -26,8 +26,6 @@ const documentCategories = [
   { id: 'other', name: 'Other' },
 ];
 
-const DEV_ADMIN_PHONE = '9989835113';
-
 const DocumentUpload: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,39 +33,17 @@ const DocumentUpload: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [uploadCategory, setUploadCategory] = useState<string>('other');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { adminRequest, isDevAdmin } = useAdminProxy();
+  const { adminRequest, isAdmin } = useAdminProxy();
 
   const fetchDocuments = async () => {
     try {
-      let data: Document[] | null = null;
-      let error: Error | null = null;
-
-      if (isDevAdmin) {
-        // Use admin proxy for dev admin
-        const filters = selectedCategory !== 'all' ? { category: selectedCategory } : undefined;
-        const result = await adminRequest<Document[]>({
-          action: 'select',
-          table: 'admin_documents',
-          data: { order: { column: 'created_at', ascending: false } },
-          filters,
-        });
-        data = result.data;
-        error = result.error;
-      } else {
-        // Use regular supabase client
-        let query = supabase
-          .from('admin_documents')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (selectedCategory !== 'all') {
-          query = query.eq('category', selectedCategory);
-        }
-
-        const result = await query;
-        data = result.data as Document[] | null;
-        error = result.error as Error | null;
-      }
+      const filters = selectedCategory !== 'all' ? { category: selectedCategory } : undefined;
+      const { data, error } = await adminRequest<Document[]>({
+        action: 'select',
+        table: 'admin_documents',
+        data: { order: { column: 'created_at', ascending: false } },
+        filters,
+      });
 
       if (error) throw error;
       setDocuments(data || []);
@@ -81,43 +57,7 @@ const DocumentUpload: React.FC = () => {
 
   useEffect(() => {
     fetchDocuments();
-  }, [selectedCategory, isDevAdmin]);
-
-  const uploadFileViaProxy = async (file: File, filePath: string): Promise<string> => {
-    // Convert file to base64
-    const arrayBuffer = await file.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
-    let binary = '';
-    for (let i = 0; i < uint8Array.length; i++) {
-      binary += String.fromCharCode(uint8Array[i]);
-    }
-    const base64 = btoa(binary);
-
-    const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-storage-upload`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-dev-admin-key': DEV_ADMIN_PHONE,
-          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-        body: JSON.stringify({
-          bucket: 'admin-documents',
-          path: filePath,
-          file: base64,
-          contentType: file.type,
-        }),
-      }
-    );
-
-    const result = await response.json();
-    if (!response.ok) {
-      throw new Error(result.error || 'Upload failed');
-    }
-
-    return result.publicUrl;
-  };
+  }, [selectedCategory, isAdmin]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -128,44 +68,25 @@ const DocumentUpload: React.FC = () => {
       const fileName = `${Date.now()}-${file.name}`;
       const filePath = `${uploadCategory}/${fileName}`;
 
-      if (isDevAdmin) {
-        // Use proxy for storage upload
-        await uploadFileViaProxy(file, filePath);
+      const { error: uploadError } = await supabase.storage
+        .from('admin-documents')
+        .upload(filePath, file);
 
-        // Insert document record via proxy
-        const { error: dbError } = await adminRequest({
-          action: 'insert',
-          table: 'admin_documents',
-          data: {
-            name: file.name,
-            file_url: filePath,
-            file_type: file.type,
-            file_size: file.size,
-            category: uploadCategory,
-          },
-        });
+      if (uploadError) throw uploadError;
 
-        if (dbError) throw dbError;
-      } else {
-        // Use regular supabase client
-        const { error: uploadError } = await supabase.storage
-          .from('admin-documents')
-          .upload(filePath, file);
+      const { error: dbError } = await adminRequest({
+        action: 'insert',
+        table: 'admin_documents',
+        data: {
+          name: file.name,
+          file_url: filePath,
+          file_type: file.type,
+          file_size: file.size,
+          category: uploadCategory,
+        },
+      });
 
-        if (uploadError) throw uploadError;
-
-        const { error: dbError } = await supabase
-          .from('admin_documents')
-          .insert({
-            name: file.name,
-            file_url: filePath,
-            file_type: file.type,
-            file_size: file.size,
-            category: uploadCategory,
-          });
-
-        if (dbError) throw dbError;
-      }
+      if (dbError) throw dbError;
 
       toast.success('Document uploaded successfully');
       fetchDocuments();
@@ -174,9 +95,7 @@ const DocumentUpload: React.FC = () => {
       toast.error(error.message || 'Failed to upload document');
     } finally {
       setIsUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -185,9 +104,7 @@ const DocumentUpload: React.FC = () => {
       const { data, error } = await supabase.storage
         .from('admin-documents')
         .download(doc.file_url);
-
       if (error) throw error;
-
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
       a.href = url;
@@ -204,31 +121,14 @@ const DocumentUpload: React.FC = () => {
 
   const handleDelete = async (doc: Document) => {
     if (!confirm('Are you sure you want to delete this document?')) return;
-
     try {
-      // Storage delete - try with regular client first (for public files)
-      const { error: storageError } = await supabase.storage
-        .from('admin-documents')
-        .remove([doc.file_url]);
-
-      if (storageError) console.error('Storage delete error:', storageError);
-
-      // Delete from database
-      if (isDevAdmin) {
-        const { error: dbError } = await adminRequest({
-          action: 'delete',
-          table: 'admin_documents',
-          id: doc.id,
-        });
-        if (dbError) throw dbError;
-      } else {
-        const { error: dbError } = await supabase
-          .from('admin_documents')
-          .delete()
-          .eq('id', doc.id);
-        if (dbError) throw dbError;
-      }
-
+      await supabase.storage.from('admin-documents').remove([doc.file_url]);
+      const { error: dbError } = await adminRequest({
+        action: 'delete',
+        table: 'admin_documents',
+        id: doc.id,
+      });
+      if (dbError) throw dbError;
       toast.success('Document deleted');
       fetchDocuments();
     } catch (error) {
@@ -255,7 +155,6 @@ const DocumentUpload: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {/* Upload Section */}
       <div className="bg-card rounded-xl p-4 border border-border">
         <h3 className="font-semibold mb-3">Upload Document</h3>
         <div className="flex gap-3 items-end">
@@ -271,53 +170,23 @@ const DocumentUpload: React.FC = () => {
               ))}
             </select>
           </div>
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-          >
-            {isUploading ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Upload className="w-4 h-4 mr-2" />
-            )}
+          <Button onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+            {isUploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
             Upload
           </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            onChange={handleUpload}
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
-          />
+          <input ref={fileInputRef} type="file" className="hidden" onChange={handleUpload} accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" />
         </div>
       </div>
 
-      {/* Filter */}
       <div className="flex gap-2 overflow-x-auto pb-2">
-        <Button
-          size="sm"
-          variant={selectedCategory === 'all' ? 'default' : 'outline'}
-          onClick={() => setSelectedCategory('all')}
-        >
-          All
-        </Button>
+        <Button size="sm" variant={selectedCategory === 'all' ? 'default' : 'outline'} onClick={() => setSelectedCategory('all')}>All</Button>
         {documentCategories.map((cat) => (
-          <Button
-            key={cat.id}
-            size="sm"
-            variant={selectedCategory === cat.id ? 'default' : 'outline'}
-            onClick={() => setSelectedCategory(cat.id)}
-          >
-            {cat.name}
-          </Button>
+          <Button key={cat.id} size="sm" variant={selectedCategory === cat.id ? 'default' : 'outline'} onClick={() => setSelectedCategory(cat.id)}>{cat.name}</Button>
         ))}
       </div>
 
-      {/* Documents List */}
       {isLoading ? (
-        <div className="text-center py-8">
-          <Loader2 className="w-8 h-8 mx-auto animate-spin text-muted-foreground" />
-        </div>
+        <div className="text-center py-8"><Loader2 className="w-8 h-8 mx-auto animate-spin text-muted-foreground" /></div>
       ) : documents.length === 0 ? (
         <div className="text-center py-12">
           <FolderOpen className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
@@ -326,10 +195,7 @@ const DocumentUpload: React.FC = () => {
       ) : (
         <div className="space-y-2">
           {documents.map((doc) => (
-            <div
-              key={doc.id}
-              className="flex items-center gap-3 bg-card rounded-lg p-3 border border-border"
-            >
+            <div key={doc.id} className="flex items-center gap-3 bg-card rounded-lg p-3 border border-border">
               <span className="text-2xl">{getFileIcon(doc.file_type)}</span>
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate">{doc.name}</p>
@@ -338,21 +204,8 @@ const DocumentUpload: React.FC = () => {
                 </p>
               </div>
               <div className="flex gap-1">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleDownload(doc)}
-                >
-                  <Download className="w-4 h-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => handleDelete(doc)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                <Button size="sm" variant="ghost" onClick={() => handleDownload(doc)}><Download className="w-4 h-4" /></Button>
+                <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => handleDelete(doc)}><Trash2 className="w-4 h-4" /></Button>
               </div>
             </div>
           ))}
