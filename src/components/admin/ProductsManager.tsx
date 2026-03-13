@@ -318,7 +318,7 @@ const ProductsManager: React.FC = () => {
           } : undefined}
           onClose={handleFormClose}
           onSave={handleFormSave}
-          useAdminProxy={isDevAdmin}
+          useAdminProxy={isAdmin}
         />
       )}
     </div>
