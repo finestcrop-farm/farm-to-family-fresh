@@ -57,7 +57,7 @@ const freshnessBadges = [
   { id: 'local', name: 'Local' },
 ];
 
-const DEV_ADMIN_PHONE = '9989835113';
+
 
 const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSave, useAdminProxy: useProxy = false }) => {
   const [formData, setFormData] = useState<ProductFormData>(
