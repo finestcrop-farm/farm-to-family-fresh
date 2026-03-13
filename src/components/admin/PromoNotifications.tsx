@@ -118,7 +118,7 @@ const PromoNotifications: React.FC<PromoNotificationsProps> = ({ totalUsers, onR
     try {
       let profiles: { user_id: string }[] = [];
 
-      if (isDevAdmin) {
+      if (isAdmin) {
         // Use admin proxy for dev admin
         const { data, error } = await adminRequest<{ user_id: string }[]>({
           action: 'select',
