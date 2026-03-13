@@ -4,52 +4,33 @@ import { decode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-dev-admin-key',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Dev admin phone for verification
-const DEV_ADMIN_PHONE = '9989835113';
-
-// Rate limiting configuration
-const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 30; // Lower limit for uploads
-
-// In-memory rate limit store
+const RATE_LIMIT_WINDOW_MS = 60000;
+const MAX_REQUESTS_PER_WINDOW = 30;
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
-
-// Allowed buckets for security
 const ALLOWED_BUCKETS = ['product-images', 'admin-documents'];
-
-// Max file size (5MB)
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-// Logging helper
 const log = (level: 'INFO' | 'WARN' | 'ERROR', message: string, data?: Record<string, unknown>) => {
-  const timestamp = new Date().toISOString();
-  const logEntry = { timestamp, level, message, ...data };
-  console[level === 'ERROR' ? 'error' : level === 'WARN' ? 'warn' : 'log'](JSON.stringify(logEntry));
+  console[level === 'ERROR' ? 'error' : level === 'WARN' ? 'warn' : 'log'](
+    JSON.stringify({ timestamp: new Date().toISOString(), level, message, ...data })
+  );
 };
 
-// Rate limiting check
 const checkRateLimit = (clientId: string): { allowed: boolean; remaining: number } => {
   const now = Date.now();
   const record = rateLimitStore.get(clientId);
-
   if (!record || now > record.resetTime) {
     rateLimitStore.set(clientId, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
     return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - 1 };
   }
-
-  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
-    log('WARN', 'Rate limit exceeded for uploads', { clientId, count: record.count });
-    return { allowed: false, remaining: 0 };
-  }
-
+  if (record.count >= MAX_REQUESTS_PER_WINDOW) return { allowed: false, remaining: 0 };
   record.count++;
   return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - record.count };
 };
 
-// Validate file path to prevent path traversal
 const isValidPath = (path: string): boolean => {
   return !path.includes('..') && !path.startsWith('/') && /^[a-zA-Z0-9_\-./]+$/.test(path);
 };
@@ -57,146 +38,107 @@ const isValidPath = (path: string): boolean => {
 serve(async (req) => {
   const requestId = crypto.randomUUID();
   const startTime = Date.now();
-  const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || 'unknown';
+  const clientIp = req.headers.get('x-forwarded-for') || 'unknown';
 
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Rate limiting check
     const rateLimit = checkRateLimit(clientIp);
     if (!rateLimit.allowed) {
-      log('WARN', 'Upload blocked by rate limit', { requestId, clientIp });
-      return new Response(
-        JSON.stringify({ error: 'Too many upload requests. Please try again later.' }),
-        { 
-          status: 429, 
-          headers: { 
-            ...corsHeaders, 
-            'Content-Type': 'application/json',
-            'Retry-After': '60',
-            'X-RateLimit-Remaining': '0'
-          } 
-        }
-      );
+      return new Response(JSON.stringify({ error: 'Too many upload requests' }), {
+        status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Retry-After': '60' },
+      });
     }
 
-    // Verify dev admin key
-    const devAdminKey = req.headers.get('x-dev-admin-key');
-    if (devAdminKey !== DEV_ADMIN_PHONE) {
-      log('WARN', 'Unauthorized upload attempt', { requestId, clientIp });
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized - Invalid dev admin key' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Verify JWT and check admin role
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Create admin client with service role
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       { auth: { persistSession: false } }
     );
 
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { data: roleData } = await supabaseAdmin
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+
+    if (!roleData) {
+      return new Response(JSON.stringify({ error: 'Admin access required' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const { bucket, path, file, contentType } = await req.json();
 
     if (!bucket || !path || !file) {
-      log('WARN', 'Missing required fields', { requestId, hasBucket: !!bucket, hasPath: !!path, hasFile: !!file });
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields: bucket, path, file' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Validate bucket name
     if (!ALLOWED_BUCKETS.includes(bucket)) {
-      log('WARN', 'Blocked upload to unauthorized bucket', { requestId, bucket, clientIp });
-      return new Response(
-        JSON.stringify({ error: `Upload to bucket '${bucket}' is not allowed` }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: `Upload to bucket '${bucket}' is not allowed` }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Validate path to prevent path traversal attacks
     if (!isValidPath(path)) {
-      log('WARN', 'Invalid file path detected', { requestId, path, clientIp });
-      return new Response(
-        JSON.stringify({ error: 'Invalid file path' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Invalid file path' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Decode base64 file
     const fileData = decode(file);
 
-    // Check file size
     if (fileData.length > MAX_FILE_SIZE) {
-      log('WARN', 'File too large', { requestId, size: fileData.length, maxSize: MAX_FILE_SIZE });
-      return new Response(
-        JSON.stringify({ error: `File size exceeds maximum allowed (${MAX_FILE_SIZE / 1024 / 1024}MB)` }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: `File exceeds ${MAX_FILE_SIZE / 1024 / 1024}MB limit` }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    log('INFO', 'Storage upload request', { 
-      requestId, 
-      bucket, 
-      path, 
-      contentType, 
-      fileSize: fileData.length,
-      clientIp 
-    });
+    log('INFO', 'Storage upload', { requestId, bucket, path, fileSize: fileData.length, userId: user.id });
 
-    // Upload file using service role
     const { error: uploadError } = await supabaseAdmin.storage
       .from(bucket)
-      .upload(path, fileData, {
-        contentType: contentType || 'application/octet-stream',
-        upsert: true,
-      });
+      .upload(path, fileData, { contentType: contentType || 'application/octet-stream', upsert: true });
 
     if (uploadError) {
-      log('ERROR', 'Upload failed', { requestId, bucket, path, error: uploadError.message });
-      return new Response(
-        JSON.stringify({ error: uploadError.message }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: uploadError.message }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Get public URL
-    const { data: { publicUrl } } = supabaseAdmin.storage
-      .from(bucket)
-      .getPublicUrl(path);
+    const { data: { publicUrl } } = supabaseAdmin.storage.from(bucket).getPublicUrl(path);
 
-    const duration = Date.now() - startTime;
-    log('INFO', 'Upload completed successfully', { 
-      requestId, 
-      bucket, 
-      path, 
-      duration: `${duration}ms`,
-      publicUrl 
+    log('INFO', 'Upload completed', { requestId, bucket, path, duration: `${Date.now() - startTime}ms` });
+
+    return new Response(JSON.stringify({ publicUrl }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Request-Id': requestId },
     });
-
-    return new Response(
-      JSON.stringify({ publicUrl }),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json',
-          'X-Request-Id': requestId,
-          'X-RateLimit-Remaining': rateLimit.remaining.toString()
-        } 
-      }
-    );
-
   } catch (error: unknown) {
-    const duration = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    log('ERROR', 'Storage upload error', { requestId, error: errorMessage, duration: `${duration}ms` });
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Request-Id': requestId } }
-    );
+    log('ERROR', 'Storage upload error', { requestId, error: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });
