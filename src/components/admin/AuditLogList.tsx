@@ -38,7 +38,7 @@ const actionColors: Record<string, string> = {
 };
 
 const AuditLogList: React.FC = () => {
-  const { isDevAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const { adminRequest } = useAdminProxy();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
