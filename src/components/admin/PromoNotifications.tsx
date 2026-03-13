@@ -106,7 +106,7 @@ const PromoNotifications: React.FC<PromoNotificationsProps> = ({ totalUsers, onR
 
   useEffect(() => {
     fetchHistory();
-  }, [isDevAdmin]);
+  }, [isAdmin]);
 
   const sendPromotionalNotification = async () => {
     if (!notificationTitle.trim() || !notificationMessage.trim()) {
