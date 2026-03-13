@@ -72,7 +72,7 @@ const PromoNotifications: React.FC<PromoNotificationsProps> = ({ totalUsers, onR
   const fetchHistory = async () => {
     setIsLoadingHistory(true);
     try {
-      if (isDevAdmin) {
+      if (isAdmin) {
         // Use admin proxy for dev admin to bypass RLS
         const { data, error } = await adminRequest<PromoHistory[]>({
           action: 'select',
