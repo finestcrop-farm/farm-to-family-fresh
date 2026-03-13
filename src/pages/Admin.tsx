@@ -80,11 +80,11 @@ const Admin: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
 
   useEffect(() => {
-    if (!authLoading && !isAdmin && !isDevAdmin) {
+    if (!authLoading && !isAdmin) {
       toast.error('Access denied. Admin only.');
       navigate('/');
     }
-  }, [isAdmin, isDevAdmin, authLoading, navigate]);
+  }, [isAdmin, authLoading, navigate]);
 
   const fetchData = async () => {
     setIsLoading(true);
