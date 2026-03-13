@@ -56,7 +56,7 @@ const notificationTemplates = [
 ];
 
 const PromoNotifications: React.FC<PromoNotificationsProps> = ({ totalUsers, onRefresh }) => {
-  const { isDevAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const { adminRequest } = useAdminProxy();
   const [notificationTitle, setNotificationTitle] = useState('');
   const [notificationMessage, setNotificationMessage] = useState('');
