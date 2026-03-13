@@ -190,7 +190,7 @@ const Admin: React.FC = () => {
     );
   }
 
-  if (!isAdmin && !isDevAdmin) {
+  if (!isAdmin) {
     return null;
   }
 

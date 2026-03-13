@@ -60,7 +60,7 @@ const PromoHistoryList: React.FC = () => {
 
   useEffect(() => {
     fetchHistory();
-  }, [isDevAdmin]);
+  }, [isAdmin]);
 
   if (isLoading) {
     return (

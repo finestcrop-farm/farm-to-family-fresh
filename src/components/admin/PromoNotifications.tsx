@@ -201,7 +201,7 @@ const PromoNotifications: React.FC<PromoNotificationsProps> = ({ totalUsers, onR
         push_failure_count: pushResult.failureCount,
       };
 
-      if (isDevAdmin) {
+      if (isAdmin) {
         const { error: historyError } = await adminRequest({
           action: 'insert',
           table: 'promotional_notification_history',

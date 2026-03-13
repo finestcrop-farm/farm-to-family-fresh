@@ -80,7 +80,7 @@ const AuditLogList: React.FC = () => {
 
   useEffect(() => {
     fetchLogs();
-  }, [isDevAdmin]);
+  }, [isAdmin]);
 
   const filteredLogs = logs.filter((log) => {
     const matchesSearch =
